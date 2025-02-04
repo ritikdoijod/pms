@@ -2,7 +2,11 @@ import "dotenv/config"
 import express, { NextFunction, Request, Response } from "express"
 import cors from "cors"
 import session from "cookie-session"
-import { config } from "./config/app.config";
+import { config } from "./configs/app.config";
+import connectDatabase from "./configs/database.config";
+import { HTTPSTATUS } from "./configs/http.config";
+import { errorHandler } from "./middlewares/errorHandler";
+import { asyncHandler } from "./middlewares/asyncHandler";
 
 const app = express();
 const BASE_PATH = config.BASE_PATH;
@@ -28,12 +32,16 @@ app.use(
   })
 )
 
-app.get("/", (req: Request, res: Response, next: NextFunction): any => {
-  return res.status(200).json({
+app.get("/", asyncHandler(async (req: Request, res: Response, next: NextFunction): any => {
+  throw new Error("Test Error")
+  return res.status(HTTPSTATUS.OK).json({
     message: "hello...."
   })
-})
+}))
+
+app.use(errorHandler)
 
 app.listen(config.PORT, async () => {
   console.log("server listening....")
+  connectDatabase()
 })
