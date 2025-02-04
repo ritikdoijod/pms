@@ -45,3 +45,15 @@ export class NotFoundException extends AppError {
     );
   }
 }
+
+export class BadRequestExceptioin extends AppError {
+  constructor(message = "Bad Request", errorCode?: ErrorCodeEnumType) {
+    super(message, HTTPSTATUS.BAD_REQUEST, errorCode || ErrorCodeEnum.VALIDATION_ERROR)
+  }
+}
+
+export class UnauthorizedExceptioin extends AppError {
+  constructor(message = "Uanauthorized Access", errorCode?: ErrorCodeEnumType) {
+    super(message, HTTPSTATUS.UNAUTHORIZED, errorCode || ErrorCodeEnum.ACCESS_UNAUTHORIZED)
+  }
+}
