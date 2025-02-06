@@ -21,7 +21,7 @@ const roleSchema = new Schema<RoleDocument>(
       unique: true,
     },
     permissions: {
-      types: [String],
+      type: [String],
       enum: Object.values(Permissions),
       required: true,
       default: function (this: RoleDocument) {
