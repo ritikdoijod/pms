@@ -1,15 +1,14 @@
-import mongoose from "mongoose"
-import { config } from "./app.config"
+import mongoose from "mongoose";
+import { config } from "./app.config";
 
 const connectDatabase = async () => {
   try {
-    await mongoose.connect(config.MONGO_URI)
+    await mongoose.connect(config.MONGO_URI);
     console.log("Connected to Mongo database");
   } catch (error) {
-    console.log("Error connecting to Mongo database")
-    process.exit(1)
+    console.log("Error connecting to Mongo database", error);
+    process.exit(1);
   }
-}
+};
 
-
-export default connectDatabase
+export default connectDatabase;
