@@ -7,12 +7,12 @@ import connectDatabase from "./configs/database.config";
 import { HTTPSTATUS } from "./configs/http.config";
 import { errorHandler } from "./middlewares/errorHandler";
 import { asyncHandler } from "./middlewares/asyncHandler";
+import passport from "passport";
 
 import "./configs/passport.config";
 
 // import routes
 import authRoutes from "./routes/auth.routes";
-import passport from "passport";
 
 const app = express();
 const BASE_PATH = config.BASE_PATH;
@@ -30,6 +30,20 @@ app.use(
     sameSite: "lax",
   }),
 );
+
+app.use(function (request, response, next) {
+  if (request.session && !request.session.regenerate) {
+    request.session.regenerate = (cb: any) => {
+      cb();
+    };
+  }
+  if (request.session && !request.session.save) {
+    request.session.save = (cb: any) => {
+      cb();
+    };
+  }
+  next();
+});
 
 app.use(passport.initialize());
 app.use(passport.session());
@@ -50,7 +64,7 @@ app.get(
   }),
 );
 
-app.use(`${config.BASE_PATH}/auth`, authRoutes);
+app.use(`${BASE_PATH}/auth`, authRoutes);
 
 app.use(errorHandler);
 

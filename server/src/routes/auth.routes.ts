@@ -1,9 +1,14 @@
 import { Router } from "express";
 import passport from "passport";
 import { config } from "../configs/app.config";
-import { googleLoginCallback } from "../controllers/auth.controller";
+import {
+  googleLoginCallback,
+  registerUserController,
+} from "../controllers/auth.controller";
 
 const router = Router();
+
+router.post("/register", registerUserController);
 
 router.get(
   "/google",
