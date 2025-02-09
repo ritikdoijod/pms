@@ -5,14 +5,20 @@ import session from "cookie-session";
 import { config } from "./configs/app.config";
 import connectDatabase from "./configs/database.config";
 import { HTTPSTATUS } from "./configs/http.config";
-import { errorHandler } from "./middlewares/errorHandler";
-import { asyncHandler } from "./middlewares/asyncHandler";
 import passport from "passport";
 
 import "./configs/passport.config";
 
+// import middlewares
+import { errorHandler } from "./middlewares/errorHandler";
+import { asyncHandler } from "./middlewares/asyncHandler";
+import { auth } from "./middlewares/auth";
+
 // import routes
 import authRoutes from "./routes/auth.routes";
+import userRoutes from "./routes/user.routes";
+import workspaceRoutes from "./routes/workspace.routes";
+import memberRoutes from "./routes/member.routes";
 
 const app = express();
 const BASE_PATH = config.BASE_PATH;
@@ -65,6 +71,9 @@ app.get(
 );
 
 app.use(`${BASE_PATH}/auth`, authRoutes);
+app.use(`${BASE_PATH}/user`, auth, userRoutes);
+app.use(`${BASE_PATH}/workspace`, workspaceRoutes);
+app.use(`${BASE_PATH}/member`, memberRoutes);
 
 app.use(errorHandler);
 

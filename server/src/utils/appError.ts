@@ -57,7 +57,7 @@ export class BadRequestException extends AppError {
   }
 }
 
-export class UnauthorizedExceptioin extends AppError {
+export class UnauthorizedException extends AppError {
   constructor(message = "Uanauthorized Access", errorCode?: ErrorCodeEnumType) {
     super(
       message,
