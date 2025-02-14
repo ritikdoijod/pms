@@ -2,6 +2,33 @@
 
 @layer components {
   .card {
-    @apply rounded-xl bg-gray-50 shadow-sm;
+    @apply p-6 rounded-xl bg-gray-50 shadow-sm;
+  }
+
+  .card-header {
+    @apply text-center;
+  }
+
+  .card-title {
+    @apply mb-2 font-semibold text-lg;
+  }
+
+  .card-description {
+    @apply mb-3 text-sm text-gray-700;
+  }
+
+  .card-content {
+    @apply my-8;
+  }
+
+  .separator {
+    @apply my-12 text-sm leading-0 text-center text-gray-600 text-nowrap w-full flex gap-3 bg-inherit items-center;
+
+    &::before,
+    &::after {
+      content: " ";
+
+      @apply bg-gray-500 flex-1 rounded-full h-[1px];
+    }
   }
 }

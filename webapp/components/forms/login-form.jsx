@@ -1,5 +1,11 @@
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils/cn.mjs";
+
+import { BiLogoGoogle } from "react-icons/bi";
 
 const LoginForm = ({ className }) => {
   return (
@@ -7,24 +13,41 @@ const LoginForm = ({ className }) => {
       <Card>
         <Card.Header>
           <Card.Title>Welcome back</Card.Title>
-          <Card.Description>Log in </Card.Description>
+          <Card.Description>Login with your google account</Card.Description>
         </Card.Header>
-        <Card.Content>
-          <div>
-            {" "}
-            <span className="inline-flex items-center justify-center rounded-md bg-indigo-500 p-2 shadow-lg">
-              {" "}
-              <svg className="h-6 w-6 stroke-white"> </svg>{" "}
-            </span>{" "}
-          </div>{" "}
-          <h3 className="text-gray-900 dark:text-white mt-5 text-base font-medium tracking-tight ">
-            Writes upside-down
-          </h3>{" "}
-          <p className="text-gray-500 dark:text-gray-400 mt-2 text-sm ">
-            {" "}
-            The Zero Gravity Pen can be used to write in any orientation,
-            including upside-down. It even works in outer space.{" "}
-          </p>
+        <Card.Content className="flex flex-col items-center">
+          <Button
+            variant="outline"
+            className="flex items-center justify-center gap-4"
+          >
+            <BiLogoGoogle />
+            Login with Google
+          </Button>
+          <Separator>Or continue with</Separator>
+          <div className="w-full">
+            <form className="grid gap-6">
+              <div className="grid gap-2">
+                <Label htmlFor="username">Username</Label>
+                <Input
+                  type="text"
+                  name="username"
+                  id="username"
+                  className="w-full"
+                  placeholder="abc@mail.com"
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="password">Password</Label>
+                <Input
+                  type="password"
+                  name="password"
+                  id="password"
+                  className="w-full"
+                />
+              </div>
+              <Button type="submit">Login</Button>
+            </form>
+          </div>
         </Card.Content>
       </Card>
     </div>
