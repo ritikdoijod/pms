@@ -6,6 +6,7 @@ import { config } from "./configs/app.config";
 import connectDatabase from "./configs/database.config";
 import { HTTPSTATUS } from "./configs/http.config";
 import passport from "passport";
+import morgan from "morgan";
 
 import "./configs/passport.config";
 
@@ -25,6 +26,7 @@ const BASE_PATH = config.BASE_PATH;
 
 app.use(express.json());
 app.use(express.urlencoded());
+app.use(morgan("combined"));
 
 app.use(
   session({

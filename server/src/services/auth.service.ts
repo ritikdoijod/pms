@@ -7,7 +7,7 @@ import Role from "../models/roles-permission.models";
 import {
   NotFoundException,
   BadRequestException,
-  UnauthorizedExceptioin,
+  UnauthorizedException,
 } from "../utils/appError";
 import Member from "../models/member.models";
 import { ProviderEnum } from "../enums/account-provider.enum";
@@ -167,7 +167,7 @@ export const verifyUserService = async ({
 
   const isMatch = await user.comparePassword(password);
 
-  if (!isMatch) throw new UnauthorizedExceptioin("Invalid email or password");
+  if (!isMatch) throw new UnauthorizedException("Invalid email or password");
 
   return user.omitPassword();
 };

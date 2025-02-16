@@ -12,7 +12,7 @@ const router = Router();
 
 router.post("/register", registerUserController);
 router.post("/login", loginController);
-router.post("/logout", logoutController);
+router.get("/logout", logoutController);
 
 router.get(
   "/google",

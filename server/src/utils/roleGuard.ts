@@ -1,5 +1,5 @@
 import { PermissionType } from "../enums/role.enum";
-import { UnauthorizedExceptioin } from "./appError";
+import { UnauthorizedException } from "./appError";
 import { RolePermissions } from "./role-permission";
 
 export const roleGuard = (
@@ -13,7 +13,7 @@ export const roleGuard = (
   );
 
   if (!hasPermission)
-    throw new UnauthorizedExceptioin(
+    throw new UnauthorizedException(
       "You do not have the necessary permissions to perform this action",
     );
 };
