@@ -1,0 +1,12 @@
+{
+  "baseUrl": ".",
+  "compilerOptions": {
+    "module": "esnext",
+    "paths": {
+      "@/*": [
+        "./*"
+      ]
+    }
+  }
+}
+
