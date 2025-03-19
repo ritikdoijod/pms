@@ -1,3 +1,11 @@
-export default function Page() {
-  return <div>Test</div>;
-}
+import { Header } from "@/components/shared/header";
+
+const Page = () => {
+  return (
+    <div>
+      <Header />
+    </div>
+  );
+};
+
+export default Page;

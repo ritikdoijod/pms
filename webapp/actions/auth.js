@@ -1,7 +1,6 @@
 "use server";
 
 import { api } from "@/configs/fc.config";
-import { isRedirectError } from "next/dist/client/components/redirect-error";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
@@ -16,7 +15,7 @@ const signup = async (_prevState, formData) => {
   const { name, email, password, confirmPassword } =
     Object.fromEntries(formData);
 
-  const { data, error } = await api.post("/api/auth/register", {
+  const { data, error } = await api.post("/auth/register", {
     name,
     email,
     password,
@@ -31,7 +30,7 @@ const signup = async (_prevState, formData) => {
 const login = async (_prevState, formData) => {
   const { email, password } = Object.fromEntries(formData);
 
-  const { data, error } = await api.post("/api/auth/login", {
+  const { data, error } = await api.post("/auth/login", {
     email,
     password,
   });

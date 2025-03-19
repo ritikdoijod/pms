@@ -23,7 +23,7 @@ api.hooks.req.use(async (opts) => {
 });
 
 api.hooks.res.use(async (res) =>
-  res.meta?.status === "success"
+  res.status === "success"
     ? { data: res.data, error: null }
     : { data: null, error: res.error },
 );

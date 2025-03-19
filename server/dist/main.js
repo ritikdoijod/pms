@@ -327,6 +327,11 @@ const workspaceSchema = new mongoose.Schema(
       unique: true,
       default: generateInviteCode,
     },
+    projects: [{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Project",
+      required: true,
+    }]
   },
   {
     timestamps: true,
@@ -812,6 +817,7 @@ app.use(errorHandler);
 
 const connectToDB = async () => {
   try {
+    mongoose.set("strict", false);
     await mongoose.connect(config.MONGO_URI);
     logger.info("Database connected.");
   } catch (error) {

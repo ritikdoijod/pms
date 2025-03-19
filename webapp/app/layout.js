@@ -29,7 +29,7 @@ export default async function RootLayout({ children }) {
   let user;
 
   if (userId) {
-    const { data, error } = await api.get(`/api/v1/users/${userId}`);
+    const { data, error } = await api.get(`/users/${userId}`);
     user = data.user;
   }
 

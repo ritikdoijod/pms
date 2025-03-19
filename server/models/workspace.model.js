@@ -23,6 +23,11 @@ const workspaceSchema = new mongoose.Schema(
       unique: true,
       default: generateInviteCode,
     },
+    projects: [{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Project",
+      required: true,
+    }]
   },
   {
     timestamps: true,

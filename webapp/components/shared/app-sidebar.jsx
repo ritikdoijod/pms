@@ -1,10 +1,7 @@
-"use client";
-
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
-  SidebarGroup,
   SidebarHeader,
 } from "@/components/ui/sidebar";
 import { WorkspaceSwitcher } from "./workspace-switcher";
@@ -23,6 +20,7 @@ import {
 } from "lucide-react";
 import { NavMain } from "./nav-main";
 import { NavProjects } from "./nav-projects";
+import { api } from "@/configs/fc.config";
 
 const _data = {
   teams: [
@@ -44,7 +42,7 @@ const _data = {
   ],
   navMain: [
     {
-      title: "Projects",
+      title: "Dashboard",
       url: "#",
       icon: SquareTerminal,
       isActive: true,
@@ -148,11 +146,15 @@ const _data = {
   ],
 };
 
-const AppSidebar = ({ data, ...props }) => {
+const AppSidebar = async ({ ...props }) => {
+  const { data: { workspaces }, error } = await api.get("/workspaces");
+
+  if (error) return null;
+
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
-        <WorkspaceSwitcher workspaces={data.workspaces} />
+        <WorkspaceSwitcher workspaces={workspaces} />
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={_data.navMain} />

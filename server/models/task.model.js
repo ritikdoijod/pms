@@ -18,11 +18,6 @@ const taskSchema = new mongoose.Schema(
       ref: "Project",
       required: true,
     },
-    workspace: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Workspace",
-      required: true,
-    },
     status: {
       type: String,
       enum: Object.values(STATUS.TASK),

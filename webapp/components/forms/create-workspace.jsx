@@ -19,7 +19,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { createWorkspaceFormSchema } from "@/lib/validations/workspace";
 import { createWorkspace } from "@/actions/workspace";
 
-const CreateWorkspaceForm = () => {
+const CreateWorkspaceForm = ({ onSuccess }) => {
   const [formState, formAction] = React.useActionState(createWorkspace, {
     status: "",
   });
@@ -29,11 +29,10 @@ const CreateWorkspaceForm = () => {
   const form = useForm({
     defaultValues: {
       name: "",
-      description: "",
       ...(formState?.fields ?? {}),
     },
     resolver: zodResolver(createWorkspaceFormSchema),
-    mode: "onTouched",
+    mode: "onSubmit",
   });
 
   const [, startTransition] = React.useTransition();
@@ -50,6 +49,7 @@ const CreateWorkspaceForm = () => {
         switch (formState.status) {
           case "success":
             toast.success(formState.message);
+            if (onSuccess) onSuccess();
             break;
           case "error":
             toast.error(formState.message);
@@ -82,7 +82,10 @@ const CreateWorkspaceForm = () => {
               <FormItem>
                 <FormLabel>Name</FormLabel>
                 <FormControl>
-                  <Input placeholder="Enter workspace name here.." {...field} />
+                  <Input
+                    placeholder="Enter workspace name here.."
+                    {...field}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>

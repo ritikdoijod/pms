@@ -26,16 +26,24 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { CreateWorkspaceForm } from "../forms/create-workspace";
-import { Button } from "../ui/button";
+import Link from "next/link";
+import { useWorkspaceId } from "@/hooks/use-workspace-id";
 
 const WorkspaceSwitcher = ({ workspaces }) => {
   const { isMobile } = useSidebar();
+  const workspaceId = useWorkspaceId();
   const [activeWorkspace, setActiveWorkspace] = React.useState(workspaces[0]);
+  const [open, setOpen] = React.useState(false);
+
+  React.useEffect(() => {
+    const workspace = workspaces.find((workspace) => workspace._id === workspaceId);
+    if (workspace) setActiveWorkspace(workspace);
+  })
 
   return (
     <SidebarMenu>
       <SidebarMenuItem>
-        <Dialog>
+        <Dialog modal open={open} onOpenChange={setOpen}>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <SidebarMenuButton
@@ -67,12 +75,11 @@ const WorkspaceSwitcher = ({ workspaces }) => {
                 Workspaces
               </DropdownMenuLabel>
               {workspaces.map((workspace, index) => (
-                <DropdownMenuItem key={workspace.name} className="gap-2 p-2">
-                  {/* <div className="flex size-6 items-center justify-center rounded-sm border"> */}
-                  {/*   <workspace.logo className="size-4 shrink-0" /> */}
-                  {/* </div> */}
-                  {workspace.name}
-                  <DropdownMenuShortcut>⌘{index + 1}</DropdownMenuShortcut>
+                <DropdownMenuItem key={workspace._id} className="gap-2 p-2" asChild>
+                  <Link href={`/workspace/${workspace._id}`} >
+                    {workspace.name}
+                    <DropdownMenuShortcut>⌘{index + 1}</DropdownMenuShortcut>
+                  </Link>
                 </DropdownMenuItem>
               ))}
               <DropdownMenuSeparator />
@@ -80,8 +87,8 @@ const WorkspaceSwitcher = ({ workspaces }) => {
                 <div className="flex size-6 items-center justify-center rounded-sm border">
                   <Plus className="size-4" />
                 </div>
-                <DialogTrigger asChild>
-                  <Button type="button">Add workspace</Button>
+                <DialogTrigger>
+                  Add workspace
                 </DialogTrigger>
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -92,7 +99,7 @@ const WorkspaceSwitcher = ({ workspaces }) => {
               <DialogTitle>Create Workspace</DialogTitle>
               <DialogDescription></DialogDescription>
             </DialogHeader>
-            <CreateWorkspaceForm />
+            <CreateWorkspaceForm onSuccess={() => setOpen(false)} />
           </DialogContent>
         </Dialog>
       </SidebarMenuItem>
