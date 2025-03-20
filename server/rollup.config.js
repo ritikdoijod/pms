@@ -26,8 +26,9 @@ const aliases = Object.entries(jsconfig.compilerOptions?.paths).flatMap(
 const config = {
   input: "server.js",
   output: {
-    file: "dist/main.js",
+    dir: "dist",
     format: "es",
+    preserveModules: true
   },
   plugins: [alias({ entries: aliases })],
 };
