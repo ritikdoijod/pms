@@ -4,7 +4,6 @@ import pino from 'pino';
 import z, { ZodError } from 'zod';
 import mongoose$1 from 'mongoose';
 import { hash, verify } from 'argon2';
-import { v7 } from 'uuid';
 
 const STATUS = Object.freeze({
   HTTP: {
@@ -303,8 +302,6 @@ userSchema$1.methods.verifyPassword = async function (value) {
 
 const User = mongoose$1.model("User", userSchema$1);
 
-const generateInviteCode = () => v7().replace(/-/g, "").substring(0, 8);
-
 const workspaceSchema = new mongoose$1.Schema(
   {
     name: {
@@ -320,12 +317,6 @@ const workspaceSchema = new mongoose$1.Schema(
       type: mongoose$1.Schema.Types.ObjectId,
       ref: "User",
       required: true,
-    },
-    inviteCode: {
-      type: String,
-      required: true,
-      unique: true,
-      default: generateInviteCode,
     },
     projects: [{
       type: mongoose$1.Schema.Types.ObjectId,
@@ -541,13 +532,48 @@ const deleteWorkspace = asyncHandler(async (req, res) => {
   return res.success({})
 });
 
+const objectIdValidationSchema = (message) =>
+  z.string().refine((value) => mongoose.isValidObjectId(value), {
+    message,
+  });
+
+const workspaceValidationSchema = z.object({
+  name: z.string().min(3).max(255),
+  description: z.string().min(3).max(1000).optional(),
+  author: objectIdValidationSchema("Invalid author id"),
+  projects: z.array(objectIdValidationSchema("Invalid project id")).optional(),
+});
+
 const router$2 = Router();
 
 router$2.get("/", getAllWorkspaces);
-router$2.get("/:id", getWorkspaceById);
-router$2.post("/", createWorkspace);
-router$2.patch("/:id", updateWorkspace);
-router$2.delete("/:id", deleteWorkspace);
+
+router$2.get(
+  "/:id",
+  validate({ params: objectIdValidationSchema("Invalid Workspace Id") }),
+  getWorkspaceById
+);
+
+router$2.post(
+  "/",
+  validate({ body: workspaceValidationSchema }),
+  createWorkspace
+);
+
+router$2.patch(
+  "/:id",
+  validate({
+    params: objectIdValidationSchema("Invalid Workspace Id"),
+    body: workspaceValidationSchema.partial(),
+  }),
+  updateWorkspace
+);
+
+router$2.delete(
+  "/:id",
+  validate({ params: objectIdValidationSchema("Invalid Workspace Id") }),
+  deleteWorkspace
+);
 
 const projectSchema = new mongoose$1.Schema(
   {

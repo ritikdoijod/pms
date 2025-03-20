@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "rollup -c && node --env-file=.env.dev --watch dist/main.js",
     "build": "rollup -c",
-    "test": "test"
+    "test": "jest"
   },
   "author": "",
   "license": "ISC",
@@ -33,6 +33,7 @@
   },
   "devDependencies": {
     "@rollup/plugin-alias": "^5.1.1",
+    "jest": "^29.7.0",
     "rollup": "^4.35.0",
     "webpack-cli": "^6.0.1"
   }
