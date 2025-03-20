@@ -23,4 +23,10 @@
 # server files
 /server/node_modules
 /server/.env*
+
+# server build files
+/server/dist
+
+# server logs
+/server/logs
 /server/*.log*
