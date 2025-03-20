@@ -23,17 +23,34 @@ const getProject = asyncHandler(async (req, res) => {
 const createProject = asyncHandler(async (req, res) => {
   const { name, description, workspace: workspaceId } = req.body;
 
-  const workspace = await Workspace.findById(workspaceId).lean();
+  const session = await mongoose.startSession();
 
-  if (!workspace) throw NotFoundException('Workspace not found');
+  try {
+    session.startTransaction();
 
-  req.authz(workspace);
+    const workspace = await Workspace.findById(workspaceId).lean();
 
-  const project = new Project({ name, description, workspace: workspace._id, author: req.user?._id })
+    if (!workspace) throw NotFoundException('Workspace not found');
 
-  await project.save()
+    req.authz(workspace);
 
-  return res.success({ data: { project } })
+    const project = new Project({ name, description, workspace: workspace._id, author: req.user?._id })
+
+    await project.save()
+
+    workspace.projects.push(project._id);
+
+    await workspace.save();
+
+    await session.commitTransaction();
+
+    return res.success({ data: { project } })
+  } catch (error) {
+    await session.abortTransaction();
+    throw error;
+  } finally {
+    session.endSession();
+  }
 })
 
 const updateProject = asyncHandler(async (req, res) => {

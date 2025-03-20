@@ -2,7 +2,7 @@ import express, { Router } from 'express';
 import jwt from 'jsonwebtoken';
 import pino from 'pino';
 import z, { ZodError } from 'zod';
-import mongoose from 'mongoose';
+import mongoose$1 from 'mongoose';
 import { hash, verify } from 'argon2';
 import { v7 } from 'uuid';
 
@@ -239,7 +239,7 @@ const asyncHandler = (controller) => async (req, res, next) => {
   }
 };
 
-const userSchema$1 = mongoose.Schema(
+const userSchema$1 = mongoose$1.Schema(
   {
     name: {
       type: String,
@@ -261,12 +261,12 @@ const userSchema$1 = mongoose.Schema(
       default: null,
     },
     currentWorkspace: {
-      type: mongoose.Schema.Types.ObjectId,
+      type: mongoose$1.Schema.Types.ObjectId,
       ref: "Workspace",
     },
     workspaces: [
       {
-        type: mongoose.Schema.Types.ObjectId,
+        type: mongoose$1.Schema.Types.ObjectId,
         ref: "Workspace",
       },
     ],
@@ -301,11 +301,11 @@ userSchema$1.methods.verifyPassword = async function (value) {
   return await verify(this.password, value);
 };
 
-const User = mongoose.model("User", userSchema$1);
+const User = mongoose$1.model("User", userSchema$1);
 
 const generateInviteCode = () => v7().replace(/-/g, "").substring(0, 8);
 
-const workspaceSchema = new mongoose.Schema(
+const workspaceSchema = new mongoose$1.Schema(
   {
     name: {
       type: String,
@@ -317,7 +317,7 @@ const workspaceSchema = new mongoose.Schema(
       required: false,
     },
     author: {
-      type: mongoose.Schema.Types.ObjectId,
+      type: mongoose$1.Schema.Types.ObjectId,
       ref: "User",
       required: true,
     },
@@ -328,7 +328,7 @@ const workspaceSchema = new mongoose.Schema(
       default: generateInviteCode,
     },
     projects: [{
-      type: mongoose.Schema.Types.ObjectId,
+      type: mongoose$1.Schema.Types.ObjectId,
       ref: "Project",
       required: true,
     }]
@@ -338,7 +338,7 @@ const workspaceSchema = new mongoose.Schema(
   },
 );
 
-const Workspace = mongoose.model("Workspace", workspaceSchema);
+const Workspace = mongoose$1.model("Workspace", workspaceSchema);
 
 const login = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
@@ -358,7 +358,7 @@ const login = asyncHandler(async (req, res) => {
 });
 
 const registerUser = asyncHandler(async (req, res) => {
-  const session = await mongoose.startSession();
+  const session = await mongoose$1.startSession();
 
   try {
     session.startTransaction();
@@ -469,7 +469,8 @@ const getAllWorkspaces = asyncHandler(async (req, res) => {
 });
 
 const getWorkspaceById = asyncHandler(async (req, res) => {
-  const workspace = await Workspace.findById(req.params?.id).lean();
+  const { include = [] } = req.query;
+  const workspace = await Workspace.findById(req.params?.id).populate(include).lean();
 
   if (!workspace) throw new NotFoundException("Workspace not found");
   req.authz(workspace);
@@ -478,7 +479,7 @@ const getWorkspaceById = asyncHandler(async (req, res) => {
 });
 
 const createWorkspace = asyncHandler(async (req, res) => {
-  const session = await mongoose.startSession();
+  const session = await mongoose$1.startSession();
 
   try {
     session.startTransaction();
@@ -548,7 +549,7 @@ router$2.post("/", createWorkspace);
 router$2.patch("/:id", updateWorkspace);
 router$2.delete("/:id", deleteWorkspace);
 
-const projectSchema = new mongoose.Schema(
+const projectSchema = new mongoose$1.Schema(
   {
     name: {
       type: String,
@@ -560,17 +561,17 @@ const projectSchema = new mongoose.Schema(
       trim: true,
     },
     author: {
-      type: mongoose.Schema.Types.ObjectId,
+      type: mongoose$1.Schema.Types.ObjectId,
       ref: 'User',
       required: true
     },
     workspace: {
-      type: mongoose.Schema.Types.ObjectId,
+      type: mongoose$1.Schema.Types.ObjectId,
       ref: 'Workspace',
       required: true
     },
     tasks: [{
-      type: mongoose.Schema.Types.ObjectId,
+      type: mongoose$1.Schema.Types.ObjectId,
       ref: 'Task',
     }]
   },
@@ -579,7 +580,7 @@ const projectSchema = new mongoose.Schema(
   }
 );
 
-const Project = mongoose.model('Project', projectSchema);
+const Project = mongoose$1.model('Project', projectSchema);
 
 const getProjects = asyncHandler(async (req, res) => {
   const projects = await Project.find({ author: req.user?._id }).lean();
@@ -600,17 +601,34 @@ const getProject = asyncHandler(async (req, res) => {
 const createProject = asyncHandler(async (req, res) => {
   const { name, description, workspace: workspaceId } = req.body;
 
-  const workspace = await Workspace.findById(workspaceId).lean();
+  const session = await mongoose.startSession();
 
-  if (!workspace) throw NotFoundException('Workspace not found');
+  try {
+    session.startTransaction();
 
-  req.authz(workspace);
+    const workspace = await Workspace.findById(workspaceId).lean();
 
-  const project = new Project({ name, description, workspace: workspace._id, author: req.user?._id });
+    if (!workspace) throw NotFoundException('Workspace not found');
 
-  await project.save();
+    req.authz(workspace);
 
-  return res.success({ data: { project } })
+    const project = new Project({ name, description, workspace: workspace._id, author: req.user?._id });
+
+    await project.save();
+
+    workspace.projects.push(project._id);
+
+    await workspace.save();
+
+    await session.commitTransaction();
+
+    return res.success({ data: { project } })
+  } catch (error) {
+    await session.abortTransaction();
+    throw error;
+  } finally {
+    session.endSession();
+  }
 });
 
 const updateProject = asyncHandler(async (req, res) => {
@@ -651,7 +669,7 @@ router$1.post('/', createProject);
 router$1.patch('/:id', updateProject);
 router$1.delete('/:id', deleteProject);
 
-const taskSchema = new mongoose.Schema(
+const taskSchema = new mongoose$1.Schema(
   {
     title: {
       type: String,
@@ -664,13 +682,8 @@ const taskSchema = new mongoose.Schema(
       default: null,
     },
     project: {
-      type: mongoose.Schema.Types.ObjectId,
+      type: mongoose$1.Schema.Types.ObjectId,
       ref: "Project",
-      required: true,
-    },
-    workspace: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Workspace",
       required: true,
     },
     status: {
@@ -684,7 +697,7 @@ const taskSchema = new mongoose.Schema(
       default: PRIORITY.LOW,
     },
     author: {
-      type: mongoose.Schema.Types.ObjectId,
+      type: mongoose$1.Schema.Types.ObjectId,
       ref: "User",
       default: null,
     },
@@ -698,7 +711,7 @@ const taskSchema = new mongoose.Schema(
   },
 );
 
-const Task = mongoose.model("Task", taskSchema);
+const Task = mongoose$1.model("Task", taskSchema);
 
 const getTasks = asyncHandler(async (req, res) => {
   const tasks = await Task.find({ author: req.user._id }).lean();
@@ -716,31 +729,17 @@ const getTask = asyncHandler(async (req, res) => {
 });
 
 const createTask = asyncHandler(async (req, res) => {
-  const { title, description, project: projectId, workspace: workspaceId, status, priority } = req.body;
+  const { title, description, project: projectId, status, priority } = req.body;
 
-  console.log("test");
-
-  const [project, workspace] = await Promise.all([
-    Workspace.findById(workspaceId).lean(),
-    Project.findById(projectId).lean()
-  ]);
-
-  if (!workspace) throw new NotFoundException("Workspace not found")
-  req.authz(workspace);
+  const project = await Project.findById(projectId).lean();
 
   if (!project) throw new NotFoundException("Project not found");
   req.authz(project);
-
-  console.log(project);
-
-  if (project.workspace.toString() !== workspace._id)
-    throw new BadRequestException('Project does not belongs to the workspace.');
 
   const task = new Task({
     title,
     description,
     project: project._id,
-    workspace: workspace._id,
     status,
     priority
   });
@@ -751,7 +750,7 @@ const createTask = asyncHandler(async (req, res) => {
 });
 
 const updateTask = asyncHandler(async (req, res) => {
-  const { title, description, project: projectId, workspace: workspaceId, status, priority } = req.body;
+  const { title, description, project: projectId, status, priority } = req.body;
   const updateData = {
     title,
     description,
@@ -768,13 +767,6 @@ const updateTask = asyncHandler(async (req, res) => {
     if (!project) throw new NotFoundException("Project not found");
     req.authz(project);
     updateData.project = project._id;
-  }
-
-  if (workspaceId) {
-    const workspace = await Workspace.findById(workspaceId).lean();
-    if (!workspace) throw new NotFoundException("Workspace not found");
-    req.authz(workspace);
-    updateData.workspace = workspace._id;
   }
 
   const updatedTask = Task.findByIdAndUpdate(task._id, updateData, { returnDocument: 'after' }).lean();
@@ -817,8 +809,8 @@ app.use(errorHandler);
 
 const connectToDB = async () => {
   try {
-    mongoose.set("strict", false);
-    await mongoose.connect(config.MONGO_URI);
+    mongoose$1.set("strict", false);
+    await mongoose$1.connect(config.MONGO_URI);
     logger.info("Database connected.");
   } catch (error) {
     logger.fatal("Database connection failed");

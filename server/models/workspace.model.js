@@ -1,5 +1,4 @@
 import mongoose from "mongoose";
-import { generateInviteCode } from "../utils/uuid.js";
 
 const workspaceSchema = new mongoose.Schema(
   {
@@ -16,12 +15,6 @@ const workspaceSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
-    },
-    inviteCode: {
-      type: String,
-      required: true,
-      unique: true,
-      default: generateInviteCode,
     },
     projects: [{
       type: mongoose.Schema.Types.ObjectId,

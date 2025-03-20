@@ -20,7 +20,7 @@ const NavProjects = ({ projects }) => {
     <SidebarGroup className="group-data-[collapsible=icon]:hidden">
       <SidebarGroupLabel>Projects</SidebarGroupLabel>
       <SidebarMenu>
-        {projects.map((project) => (
+        {projects?.map((project) => (
           <SidebarMenuItem key={project.name}>
             <SidebarMenuButton>
               <project.icon />

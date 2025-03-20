@@ -12,7 +12,8 @@ const getAllWorkspaces = asyncHandler(async (req, res) => {
 });
 
 const getWorkspaceById = asyncHandler(async (req, res) => {
-  const workspace = await Workspace.findById(req.params?.id).lean();
+  const { include = [] } = req.query;
+  const workspace = await Workspace.findById(req.params?.id).populate(include).lean();
 
   if (!workspace) throw new NotFoundException("Workspace not found");
   req.authz(workspace);

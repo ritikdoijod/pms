@@ -7,12 +7,9 @@ import {
 import { WorkspaceSwitcher } from "./workspace-switcher";
 import { NavUser } from "./nav-user";
 import {
-  AudioWaveform,
   BookOpen,
   Bot,
-  Command,
   Frame,
-  GalleryVerticalEnd,
   Map,
   PieChart,
   Settings2,
@@ -20,26 +17,8 @@ import {
 } from "lucide-react";
 import { NavMain } from "./nav-main";
 import { NavProjects } from "./nav-projects";
-import { api } from "@/configs/fc.config";
 
 const _data = {
-  teams: [
-    {
-      name: "Acme Inc",
-      logo: GalleryVerticalEnd,
-      plan: "Enterprise",
-    },
-    {
-      name: "Acme Corp.",
-      logo: AudioWaveform,
-      plan: "Startup",
-    },
-    {
-      name: "Evil Corp.",
-      logo: Command,
-      plan: "Free",
-    },
-  ],
   navMain: [
     {
       title: "Dashboard",
@@ -127,38 +106,17 @@ const _data = {
       ],
     },
   ],
-  projects: [
-    {
-      name: "Design Engineering",
-      url: "#",
-      icon: Frame,
-    },
-    {
-      name: "Sales & Marketing",
-      url: "#",
-      icon: PieChart,
-    },
-    {
-      name: "Travel",
-      url: "#",
-      icon: Map,
-    },
-  ],
 };
 
-const AppSidebar = async ({ ...props }) => {
-  const { data: { workspaces }, error } = await api.get("/workspaces");
-
-  if (error) return null;
-
+const AppSidebar = async ({ activeWorkspace, workspaces, ...props }) => {
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
-        <WorkspaceSwitcher workspaces={workspaces} />
+        <WorkspaceSwitcher activeWorkspace={activeWorkspace} workspaces={workspaces} />
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={_data.navMain} />
-        <NavProjects projects={_data.projects} />
+        <NavProjects projects={activeWorkspace.projects} />
       </SidebarContent>
       <SidebarFooter>
         <NavUser />

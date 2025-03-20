@@ -27,18 +27,10 @@ import {
 } from "@/components/ui/dialog";
 import { CreateWorkspaceForm } from "../forms/create-workspace";
 import Link from "next/link";
-import { useWorkspaceId } from "@/hooks/use-workspace-id";
 
-const WorkspaceSwitcher = ({ workspaces }) => {
+const WorkspaceSwitcher = ({ activeWorkspace, workspaces }) => {
   const { isMobile } = useSidebar();
-  const workspaceId = useWorkspaceId();
-  const [activeWorkspace, setActiveWorkspace] = React.useState(workspaces[0]);
   const [open, setOpen] = React.useState(false);
-
-  React.useEffect(() => {
-    const workspace = workspaces.find((workspace) => workspace._id === workspaceId);
-    if (workspace) setActiveWorkspace(workspace);
-  })
 
   return (
     <SidebarMenu>
