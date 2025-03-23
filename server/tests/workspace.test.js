@@ -109,7 +109,7 @@ describe("GET /workspaces/:id", () => {
 
 
 describe("POST /workspaces/", () => {
-  it("should create and return a workspace with 201 status for authorized user", async () => {
+  it("should create and return a workspace with 201 status for authenticated user", async () => {
     const workspace = {
       name: 'Workspace3',
       description: "This is test workspace",
@@ -124,6 +124,26 @@ describe("POST /workspaces/", () => {
     expect(res.body).toMatchObject({
       status: "success",
       data: { workspace },
+    })
+  })
+
+  it("should not create a workspace and return a 401 status for unauthenticated user", async () => {
+    const workspace = {
+      name: 'Workspace4',
+      description: "This is test workspace",
+      projects: []
+    }
+
+    const res = await request(app).post("/workspaces/")
+      .set("Accept", "application/json").send(workspace);
+
+    expect(res.status).toBe(401);
+    expect(res.body).toMatchObject({
+      status: "error",
+      error: {
+        code: "UNAUTHORIZED",
+        message: "Unauthorized"
+      }
     })
   })
 })
