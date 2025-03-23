@@ -5,10 +5,9 @@ import {
   getAllWorkspaces,
   getWorkspaceById,
   updateWorkspace,
-} from "../controllers/workspace.controller.js";
+} from "@/controllers/workspace.controller.js";
 import { validate } from "@/middlewares/validate.middleware.js";
-import { objectIdValidationSchema } from "@/validations/mongoose.validation.js";
-import { workspaceValidationSchema } from "@/validations/workspace.validation.js";
+import { paramsIdValidationSchema, workspaceValidationSchema } from "@/validations/workspace.validation.js";
 
 const router = Router();
 
@@ -16,7 +15,7 @@ router.get("/", getAllWorkspaces);
 
 router.get(
   "/:id",
-  validate({ params: objectIdValidationSchema("Invalid Workspace Id") }),
+  validate({ params: paramsIdValidationSchema }),
   getWorkspaceById
 );
 
@@ -29,7 +28,7 @@ router.post(
 router.patch(
   "/:id",
   validate({
-    params: objectIdValidationSchema("Invalid Workspace Id"),
+    params: paramsIdValidationSchema,
     body: workspaceValidationSchema.partial(),
   }),
   updateWorkspace
@@ -37,7 +36,7 @@ router.patch(
 
 router.delete(
   "/:id",
-  validate({ params: objectIdValidationSchema("Invalid Workspace Id") }),
+  validate({ params: paramsIdValidationSchema }),
   deleteWorkspace
 );
 

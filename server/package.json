@@ -2,10 +2,10 @@
   "name": "pms-server",
   "version": "0.0.1",
   "description": "Project management server",
-  "main": "dist/main.js",
+  "main": "server.js",
   "type": "module",
   "scripts": {
-    "dev": "rollup -c && node --env-file=.env.dev --watch dist/main.js",
+    "dev": "rollup -c && node --env-file=.env.dev --watch dist/server.js",
     "build": "rollup -c",
     "test": "node --env-file=.env.dev node_modules/vitest/vitest.mjs run"
   },
@@ -33,6 +33,7 @@
   },
   "devDependencies": {
     "@rollup/plugin-alias": "^5.1.1",
+    "mongodb-memory-server": "^10.1.4",
     "rollup": "^4.35.0",
     "supertest": "^7.1.0",
     "vitest": "^3.0.9",

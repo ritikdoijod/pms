@@ -18,7 +18,8 @@ const login = asyncHandler(async (req, res) => {
   if (!user) throw new UnauthorizedException("Invalid Credentials");
 
   if (await user.verifyPassword(password)) {
-    const token = jwt.sign({ user }, config.AUTH_SECRET);
+    // TODO: replace iss from env, update audience 
+    const token = jwt.sign({ iss: 'localhost.com', sub: user._id, aud: '' }, config.AUTH_SECRET);
 
     return res.success({ data: { token, user } });
   }

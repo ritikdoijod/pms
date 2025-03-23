@@ -4,11 +4,12 @@ import path from "path";
 export default defineConfig({
   test: {
     environment: 'node',
-    globals: true
+    globals: true,
+    testTimeout: 15_000,
   },
   resolve: {
     alias: {
       "@": path.resolve(__dirname),
     }
-  }
+  },
 })

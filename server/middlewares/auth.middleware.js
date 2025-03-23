@@ -11,20 +11,19 @@ const authn = (req, res, next) => {
 
     if (authorization.startsWith("Bearer")) {
       const decoded = jwt.verify(token, config.AUTH_SECRET);
-      req.user = decoded.user;
+      req.user = decoded.sub;
       return next();
     }
 
     throw new UnauthorizedException("Unauthorized");
   } catch (error) {
-    console.log(error);
     throw new UnauthorizedException("Unauthorized");
   }
 };
 
 const authz = (req, res, next) => {
   req.authz = (doc) => {
-    if (doc.author.toString() === req.user?._id) return doc;
+    if (doc.author.toString() === req.user) return doc;
 
     throw new ForbiddenException('Forbidden')
   }

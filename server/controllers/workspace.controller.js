@@ -6,7 +6,7 @@ import { NotFoundException } from "@/utils/app-error.js";
 import { STATUS } from "@/utils/constants.js"
 
 const getAllWorkspaces = asyncHandler(async (req, res) => {
-  const workspaces = await Workspace.find({ author: req.user?._id }).lean();
+  const workspaces = await Workspace.find({ author: req.user }).lean();
 
   return res.success({ data: { workspaces } });
 });
@@ -31,12 +31,12 @@ const createWorkspace = asyncHandler(async (req, res) => {
     const workspace = new Workspace({
       name,
       description,
-      author: req.user?._id,
+      author: req.user,
     });
 
     await workspace.save({ session });
 
-    await User.findByIdAndUpdate(req.user?._id, {
+    await User.findByIdAndUpdate(req.user, {
       $push: { workspaces: workspace._id },
     }, { session }).lean();
 
