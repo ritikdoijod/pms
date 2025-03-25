@@ -1,6 +1,5 @@
-import jwt from "jsonwebtoken";
-import { config } from "../configs/app.config.js";
 import { ForbiddenException, UnauthorizedException } from "@/utils/app-error";
+import { verifyToken } from "@/utils/jwt.js";
 
 const authn = (req, res, next) => {
   try {
@@ -10,7 +9,7 @@ const authn = (req, res, next) => {
     const token = authorization.split(" ")[1];
 
     if (authorization.startsWith("Bearer")) {
-      const decoded = jwt.verify(token, config.AUTH_SECRET);
+      const decoded = verifyToken(token);
       req.user = decoded.sub;
       return next();
     }

@@ -12,9 +12,8 @@ const seedWorkspaces = async (workspaces, author) => {
     ...workspace,
     author,
   }));
-  return JSON.parse(
-    JSON.stringify(await Workspace.create(workspacesWithAuthor))
-  );
+
+  return await Workspace.create(workspacesWithAuthor);
 };
 
 const seedProjects = async (projects, workspace, author) => {

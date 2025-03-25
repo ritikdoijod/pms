@@ -1,5 +1,4 @@
 import mongoose from "mongoose";
-import jwt from "jsonwebtoken";
 import { asyncHandler } from "../middlewares/async-handler.middleware.js";
 import { User } from "../models/user.model.js";
 import { Workspace } from "../models/workspace.model.js";
@@ -7,7 +6,7 @@ import {
   BadRequestException,
   UnauthorizedException,
 } from "../utils/app-error.js";
-import { config } from "../configs/app.config.js";
+import { signToken } from "@/utils/jwt.js";
 
 const login = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
@@ -18,8 +17,7 @@ const login = asyncHandler(async (req, res) => {
   if (!user) throw new UnauthorizedException("Invalid Credentials");
 
   if (await user.verifyPassword(password)) {
-    // TODO: replace iss from env, update audience 
-    const token = jwt.sign({ iss: 'localhost.com', sub: user._id, aud: '' }, config.AUTH_SECRET);
+    const token = signToken(user._id);
 
     return res.success({ data: { token, user } });
   }
