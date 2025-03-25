@@ -50,10 +50,10 @@ afterAll(async () => {
   await mongoReplSet.stop();
 });
 
-describe("GET /workspaces", () => {
-  it("should return a list of workspaces with 200 status for authenticated user", async () => {
+describe("GET /projects", () => {
+  it("should return a list of projects with 200 status for authenticated user", async () => {
     const res = await request(app)
-      .get("/workspaces")
+      .get("/projects")
       .set("Authorization", `Bearer ${user1Token}`)
       .set("Accept", "application/json");
 
@@ -62,7 +62,6 @@ describe("GET /workspaces", () => {
     expect(res.body).toMatchObject({
       status: "success",
       data: {
-        // workspaces: await Workspace.find({ author: userId.toString() }).lean().toJSON()
         workspaces: [workspaces[0]],
       },
       meta: { apiVersion: "0.0.1" },

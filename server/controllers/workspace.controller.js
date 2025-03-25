@@ -2,6 +2,8 @@ import mongoose from "mongoose";
 import { asyncHandler } from "@/middlewares/async-handler.middleware.js";
 import { Workspace } from "@/models/workspace.model.js";
 import { User } from "@/models/user.model.js";
+import { Project } from "@/models/project.model";
+import { Task } from "@/models/task.model";
 import { NotFoundException } from "@/utils/app-error.js";
 import { STATUS } from "@/utils/constants.js"
 
@@ -74,14 +76,30 @@ const updateWorkspace = asyncHandler(async (req, res) => {
 });
 
 const deleteWorkspace = asyncHandler(async (req, res) => {
-  const workspace = await Workspace.findById(req.params.id).lean();
+  const session = await mongoose.startSession();
 
-  if (!workspace) throw new NotFoundException("Workspace not found");
-  req.authz(workspace);
+  try {
+    session.startTransaction();
+    const workspace = await Workspace.findById(req.params.id).lean();
 
-  await Workspace.findByIdAndDelete(workspace._id);
+    if (!workspace) throw new NotFoundException("Workspace not found");
+    req.authz(workspace);
 
-  return res.success({})
+    await Task.deleteMany({ project: workspace.projects })
+
+    await Project.deleteMany({ workspace: workspace._id })
+
+    await Workspace.findByIdAndDelete(workspace._id).session(session);
+
+    await session.commitTransaction();
+
+    return res.success({ data: {} })
+  } catch (error) {
+    await session.abortTransaction()
+    throw error;
+  } finally {
+    session.endSession()
+  }
 });
 
 export {
