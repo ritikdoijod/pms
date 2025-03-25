@@ -1,159 +1,38 @@
-import mongoose from "mongoose";
+import { Project } from "@/models/project.model";
+import { Task } from "@/models/task.model";
+import { User } from "@/models/user.model";
+import { Workspace } from "@/models/workspace.model";
 
-const users = [
-  {
-    _id: new mongoose.Types.ObjectId().toString(),
-    name: "Test User1",
-    email: "test_user1@mail.com",
-    password: "",
-    isActive: true
-  },
-  {
-    _id: new mongoose.Types.ObjectId().toString(),
-    name: "Test User2",
-    email: "test_user2@mail.com",
-    password: "",
-    isActive: true
-  },
-  {
-    _id: new mongoose.Types.ObjectId().toString(),
-    name: "Test User3",
-    email: "test_user3@mail.com",
-    password: "",
-    isActive: true
-  },
-  {
-    _id: new mongoose.Types.ObjectId().toString(),
-    name: "Test User4",
-    email: "test_user4@mail.com",
-    password: "",
-    isActive: true
-  },
-  {
-    _id: new mongoose.Types.ObjectId().toString(),
-    name: "Test User5",
-    email: "test_user5@mail.com",
-    password: "",
-    isActive: true
-  }
-]
+const seedUsers = async (users) => {
+  return await User.create(users);
+};
 
-const workspaces = [
-  {
-    _id: new mongoose.Types.ObjectId().toString(),
-    name: "Workspace1",
-    description: "",
-    author: users[0]._id,
-    projects: [],
-  },
-  {
-    _id: new mongoose.Types.ObjectId().toString(),
-    name: "Workspace2",
-    description: "",
-    author: users[0]._id,
-  },
-  {
-    _id: new mongoose.Types.ObjectId().toString(),
-    name: "Workspace3",
-    description: "",
-    author: users[0]._id,
-  },
-  {
-    _id: new mongoose.Types.ObjectId().toString(),
-    name: "Workspace4",
-    description: "",
-    author: users[0]._id,
-  },
-  {
-    _id: new mongoose.Types.ObjectId().toString(),
-    name: "Workspace5",
-    description: "",
-    author: users[0]._id,
-  },
-];
+const seedWorkspaces = async (workspaces, author) => {
+  const workspacesWithAuthor = workspaces.map((workspace) => ({
+    ...workspace,
+    author,
+  }));
+  return JSON.parse(
+    JSON.stringify(await Workspace.create(workspacesWithAuthor))
+  );
+};
 
-const projects = [
-  {
-    _id: new mongoose.Types.ObjectId().toString(),
-    name: "Project1",
-    description: "",
-    author: users[0]._id,
-    workspace: workspaces[0]._id
-  },
-  {
-    _id: new mongoose.Types.ObjectId().toString(),
-    name: "Project2",
-    description: "",
-    author: users[0]._id,
-    workspace: workspaces[0]._id
-  },
-  {
-    _id: new mongoose.Types.ObjectId().toString(),
-    name: "Project3",
-    description: "",
-    author: users[0]._id,
-    workspace: workspaces[0]._id
-  },
-  {
-    _id: new mongoose.Types.ObjectId().toString(),
-    name: "Project4",
-    description: "",
-    author: users[0]._id,
-    workspace: workspaces[0]._id
-  },
-  {
-    _id: new mongoose.Types.ObjectId().toString(),
-    name: "Project5",
-    description: "",
-    author: users[0]._id,
-    workspace: workspaces[0]._id
-  },
-]
+const seedProjects = async (projects, workspace, author) => {
+  const projectsWithWorkspaceAndAuthor = projects.map((project) => ({
+    ...project,
+    workspace,
+    author,
+  }));
+  return await Project.create(projectsWithWorkspaceAndAuthor);
+};
 
-const tasks = [
-  {
-    _id: new mongoose.Types.ObjectId().toString(),
-    title: "Task1",
-    description: "",
-    project: projects[0]._id,
-    status: "TODO",
-    priority: "normal",
-    author: users[0],
-  },
-  {
-    _id: new mongoose.Types.ObjectId().toString(),
-    title: "Task2",
-    description: "",
-    project: projects[0]._id,
-    status: "TODO",
-    priority: "normal",
-    author: users[0],
-  },
-  {
-    _id: new mongoose.Types.ObjectId().toString(),
-    title: "Task3",
-    description: "",
-    project: projects[0]._id,
-    status: "TODO",
-    priority: "normal",
-    author: users[0],
-  },
-  {
-    _id: new mongoose.Types.ObjectId().toString(),
-    title: "Task4",
-    description: "",
-    project: projects[0]._id,
-    status: "TODO",
-    priority: "normal",
-    author: users[0],
-  },
-  {
-    _id: new mongoose.Types.ObjectId().toString(),
-    title: "Task5",
-    description: "",
-    project: projects[0]._id,
-    status: "TODO",
-    priority: "normal",
-    author: users[0],
-  },
-]
+const seedTasks = async (tasks, project, author) => {
+  const tasksWithProjectAndAuthor = tasks.map((task) => ({
+    ...task,
+    project,
+    author,
+  }));
+  return await Task.create(tasksWithProjectAndAuthor);
+};
+
+export { seedUsers, seedWorkspaces, seedProjects, seedTasks };
