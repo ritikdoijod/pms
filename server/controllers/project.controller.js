@@ -1,11 +1,23 @@
+import mongoose from "mongoose"
+
 import { asyncHandler } from "@/middlewares/async-handler.middleware.js"
 import { Project } from "@/models/project.model.js"
 import { Workspace } from "@/models/workspace.model.js"
 import { NotFoundException } from "@/utils/app-error.js"
+import { parseFilters } from "@/utils/filters"
 
 
 const getProjects = asyncHandler(async (req, res) => {
-  const projects = await Project.find({ author: req.user?._id }).lean();
+  const { include = [], filters = {} } = req.query;
+  const projects = await Project.find({
+    $and: [
+      { ...parseFilters(filters) },
+      {
+        author: {
+          $eq: req.user
+        }
+      }]
+  }).populate(include).lean();
 
   return res.success({ data: { projects } })
 })
@@ -28,13 +40,13 @@ const createProject = asyncHandler(async (req, res) => {
   try {
     session.startTransaction();
 
-    const workspace = await Workspace.findById(workspaceId).lean();
+    const workspace = await Workspace.findById(workspaceId);
 
     if (!workspace) throw NotFoundException('Workspace not found');
 
     req.authz(workspace);
 
-    const project = new Project({ name, description, workspace: workspace._id, author: req.user?._id })
+    const project = new Project({ name, description, workspace: workspace._id, author: req.user })
 
     await project.save()
 

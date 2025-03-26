@@ -22,6 +22,7 @@ const seedProjects = async (projects, workspace, author) => {
     workspace,
     author,
   }));
+
   return await Project.create(projectsWithWorkspaceAndAuthor);
 };
 

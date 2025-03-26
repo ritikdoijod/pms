@@ -6,8 +6,10 @@ import mongoose from "mongoose";
 import { app } from "@/app";
 import { Workspace } from "@/models/workspace.model";
 
-import { seedUsers, seedWorkspaces } from "./seeds/index";
+import { seedUsers, seedWorkspaces, seedProjects } from "./seeds/index";
 import workspacesData from "./seeds/workspaces";
+import projectsData from "./seeds/projects";
+
 import { signToken } from "@/utils/jwt";
 
 const mongoReplSet = await MongoMemoryReplSet.create({ replSet: 2 });
@@ -17,11 +19,13 @@ let ctx;
 beforeAll(async () => {
   await mongoose.connect(mongoReplSet.getUri());
   const user = await seedUsers({ name: "Test User1", email: "test_user1@mail.com", password: "Test@123" });
-  const workspaces = await seedWorkspaces(workspacesData, user._id);
+  const workspaces = await seedWorkspaces(workspacesData, user._id)
+  const projects = await seedProjects(projectsData);
+
   const token = signToken(user._id);
   const invalidToken = signToken("67d869a9de3d418067ec8f14")
 
-  ctx = { token, user, workspaces, invalidToken }
+  ctx = { token, user, workspaces, projects, invalidToken }
 });
 
 afterAll(async () => {
