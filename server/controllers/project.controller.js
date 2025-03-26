@@ -1,11 +1,11 @@
-import mongoose from "mongoose"
+import mongoose from "mongoose";
 
-import { asyncHandler } from "@/middlewares/async-handler.middleware.js"
-import { Project } from "@/models/project.model.js"
-import { Workspace } from "@/models/workspace.model.js"
-import { NotFoundException } from "@/utils/app-error.js"
-import { parseFilters } from "@/utils/filters"
-
+import { asyncHandler } from "@/middlewares/async-handler.middleware.js";
+import { Project } from "@/models/project.model.js";
+import { Workspace } from "@/models/workspace.model.js";
+import { NotFoundException } from "@/utils/app-error.js";
+import { parseFilters } from "@/utils/filters";
+import { STATUS } from "@/utils/constants";
 
 const getProjects = asyncHandler(async (req, res) => {
   const { include = [], filters = {} } = req.query;
@@ -14,23 +14,26 @@ const getProjects = asyncHandler(async (req, res) => {
       { ...parseFilters(filters) },
       {
         author: {
-          $eq: req.user
-        }
-      }]
-  }).populate(include).lean();
+          $eq: req.user,
+        },
+      },
+    ],
+  })
+    .populate(include)
+    .lean();
 
-  return res.success({ data: { projects } })
-})
+  return res.success({ data: { projects } });
+});
 
 const getProject = asyncHandler(async (req, res) => {
   const project = await Project.findById(req.params.id).lean();
 
-  if (!project) throw NotFoundException("Project not found")
+  if (!project) throw new NotFoundException("Project not found");
 
   req.authz(project);
 
-  return res.success({ data: { project } })
-})
+  return res.success({ data: { project } });
+});
 
 const createProject = asyncHandler(async (req, res) => {
   const { name, description, workspace: workspaceId } = req.body;
@@ -42,13 +45,18 @@ const createProject = asyncHandler(async (req, res) => {
 
     const workspace = await Workspace.findById(workspaceId);
 
-    if (!workspace) throw NotFoundException('Workspace not found');
+    if (!workspace) throw new NotFoundException("Workspace not found");
 
     req.authz(workspace);
 
-    const project = new Project({ name, description, workspace: workspace._id, author: req.user })
+    const project = new Project({
+      name,
+      description,
+      workspace: workspace._id,
+      author: req.user,
+    });
 
-    await project.save()
+    await project.save();
 
     workspace.projects.push(project._id);
 
@@ -56,43 +64,47 @@ const createProject = asyncHandler(async (req, res) => {
 
     await session.commitTransaction();
 
-    return res.success({ data: { project } })
+    return res.success({ statusCode: STATUS.HTTP.CREATED, data: { project } });
   } catch (error) {
     await session.abortTransaction();
     throw error;
   } finally {
     session.endSession();
   }
-})
+});
 
 const updateProject = asyncHandler(async (req, res) => {
   const { name, description, workspace: workspaceId } = req.body;
   const updateData = { name, description };
 
   const project = await Project.findById(req.params.id).lean();
-  if (!project) throw NotFoundException("Project not found")
+  if (!project) throw new NotFoundException("Project not found");
   req.authz(project);
 
   if (workspaceId) {
     const workspace = await Workspace.findById(workspaceId).lean();
-    if (!workspace) throw NotFoundException('Workspace not found');
+    if (!workspace) throw new NotFoundException("Workspace not found");
     updateData.workspace = req.authz(workspace);
   }
 
-  const updatedProject = await Project.findByIdAndUpdate(project._id, updateData, { returnDocument: 'after' }).lean();
+  const updatedProject = await Project.findByIdAndUpdate(
+    project._id,
+    updateData,
+    { returnDocument: "after" }
+  ).lean();
 
-  return res.success({ data: { project: updatedProject } })
-})
+  return res.success({ data: { project: updatedProject } });
+});
 
 const deleteProject = asyncHandler(async (req, res) => {
   const project = await Project.findById(req.params.id).lean();
 
-  if (!project) throw NotFoundException("Project not found")
+  if (!project) throw new NotFoundException("Project not found");
   req.authz(project);
 
   await Project.findByIdAndDelete(project._id).lean();
 
-  return res.success({})
-})
+  return res.success({});
+});
 
-export { getProjects, getProject, createProject, updateProject, deleteProject }
+export { getProjects, getProject, createProject, updateProject, deleteProject };

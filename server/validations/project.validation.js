@@ -8,4 +8,8 @@ const projectValidationSchema = z.object({
   tasks: z.array(objectIdValidationSchema('Invalid task id')).optional()
 })
 
-export { projectValidationSchema }
+const paramsIdValidationSchema = z.object({
+  id: objectIdValidationSchema("Invalid project id")
+})
+
+export { projectValidationSchema, paramsIdValidationSchema }

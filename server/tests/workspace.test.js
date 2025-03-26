@@ -16,7 +16,7 @@ let ctx;
 
 beforeAll(async () => {
   await mongoose.connect(mongoReplSet.getUri());
-  const user = await seedUsers({ name: "Test User1", email: "test_user1@mail.com", password: "Test@123" });
+  const [user] = await seedUsers([{ name: "Test User1", email: "test_user1@mail.com", password: "Test@123" }]);
   const workspaces = await seedWorkspaces(workspacesData, user._id);
   const token = signToken(user._id);
   const invalidToken = signToken("67d869a9de3d418067ec8f14")
@@ -152,6 +152,7 @@ describe("POST /workspaces", () => {
         workspace: {
           name: "New Workspace1",
           description: "This is new workspace",
+          author: ctx.user._id.toString()
         }
       },
     });
@@ -183,7 +184,7 @@ describe("POST /workspaces", () => {
     });
 
     const workspace = await Workspace.findOne({ name: "New Workspace2" }).lean();
-    expect(workspace).toBe(null)
+    expect(workspace).toBeNull()
   });
 
   it("should not create a workspace and return a 400 status if the request body is empty", async () => {

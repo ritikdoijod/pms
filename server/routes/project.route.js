@@ -7,25 +7,24 @@ import {
 } from "@/controllers/project.controller";
 import { validate } from "@/middlewares/validate.middleware";
 import { objectIdValidationSchema } from "@/validations/mongoose.validation";
-import { projectValidationSchema } from "@/validations/project.validation";
+import {
+  paramsIdValidationSchema,
+  projectValidationSchema,
+} from "@/validations/project.validation";
 import { Router } from "express";
 
 const router = Router();
 
 router.get("/", getProjects);
 
-router.get(
-  "/:id",
-  validate({ params: objectIdValidationSchema("Invalid project id") }),
-  getProject
-);
+router.get("/:id", validate({ params: paramsIdValidationSchema }), getProject);
 
 router.post("/", validate({ body: projectValidationSchema }), createProject);
 
 router.patch(
   "/:id",
   validate({
-    params: objectIdValidationSchema("Invalid project id"),
+    params: paramsIdValidationSchema,
     body: projectValidationSchema.partial(),
   }),
   updateProject
@@ -33,7 +32,7 @@ router.patch(
 
 router.delete(
   "/:id",
-  validate({ params: objectIdValidationSchema("Invalid project id") }),
+  validate({ params: paramsIdValidationSchema }),
   deleteProject
 );
 
