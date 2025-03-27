@@ -77,34 +77,74 @@ const updateProject = asyncHandler(async (req, res) => {
   const { name, description, workspace: workspaceId } = req.body;
   const updateData = { name, description };
 
-  const project = await Project.findById(req.params.id).lean();
-  if (!project) throw new NotFoundException("Project not found");
-  req.authz(project);
+  const session = await mongoose.startSession();
 
-  if (workspaceId) {
-    const workspace = await Workspace.findById(workspaceId).lean();
-    if (!workspace) throw new NotFoundException("Workspace not found");
-    updateData.workspace = req.authz(workspace);
+  try {
+    session.startTransaction();
+
+    const project = await Project.findById(req.params.id).lean();
+    if (!project) throw new NotFoundException("Project not found");
+    req.authz(project);
+
+    if (workspaceId && workspaceId !== project.workspace) {
+      const workspace = await Workspace.findById(workspaceId).lean();
+      if (!workspace) throw new NotFoundException("Workspace not found");
+
+      await Workspace.findByIdAndUpdate(project.workspace, {
+        $pull: {
+          projects: { $eq: project._id }
+        }
+      }).session(session);
+
+      updateData.workspace = req.authz(workspace);
+    }
+
+    const updatedProject = await Project.findByIdAndUpdate(
+      project._id,
+      updateData,
+      { returnDocument: "after" }
+    ).session(session).lean();
+
+    await session.commitTransaction();
+
+    return res.success({ data: { project: updatedProject } });
+  } catch (error) {
+    await session.abortTransaction();
+    throw error;
+  } finally {
+    session.endSession();
   }
-
-  const updatedProject = await Project.findByIdAndUpdate(
-    project._id,
-    updateData,
-    { returnDocument: "after" }
-  ).lean();
-
-  return res.success({ data: { project: updatedProject } });
 });
 
 const deleteProject = asyncHandler(async (req, res) => {
-  const project = await Project.findById(req.params.id).lean();
+  const session = await mongoose.startSession();
 
-  if (!project) throw new NotFoundException("Project not found");
-  req.authz(project);
+  try {
+    session.startTransaction();
 
-  await Project.findByIdAndDelete(project._id).lean();
+    const project = await Project.findById(req.params.id).lean();
 
-  return res.success({});
+    if (!project) throw new NotFoundException("Project not found");
+    req.authz(project);
+
+    await Workspace.findByIdAndUpdate(project.workspace, {
+      $pull: {
+        projects: { $eq: project._id }
+      }
+    }).session(session);
+
+
+    await Project.findByIdAndDelete(project._id).session(session).lean();
+
+    await session.commitTransaction()
+
+    return res.success({ data: {} });
+  } catch (error) {
+    await session.abortTransaction();
+    throw error;
+  } finally {
+    session.endSession();
+  }
 });
 
 export { getProjects, getProject, createProject, updateProject, deleteProject };

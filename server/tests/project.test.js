@@ -180,7 +180,7 @@ describe("POST /projects", () => {
 
   it("should not create a project and return a 404 status if workspace is not found", async () => {
     const res = await request(app)
-      .post("/workspaces/")
+      .post("/projects/")
       .set("Accept", "application/json")
       .send({
         name: "New Workspace2",
@@ -223,11 +223,11 @@ describe("POST /projects", () => {
     });
   });
 
-  it.todo(
+  it(
     "should not create a project and return a 400 status if the request body is empty",
     async () => {
       const res = await request(app)
-        .post("/workspaces/")
+        .post("/projects/")
         .set("Authorization", `Bearer ${ctx.token}`)
         .set("Accept", "application/json");
 
@@ -242,21 +242,26 @@ describe("POST /projects", () => {
               field: "name",
               message: "Required",
             },
+            {
+              field: "workspace",
+              message: "Required",
+            }
           ],
         },
       });
     }
   );
 
-  it.todo(
-    "should not create a workspace and return a 400 status if name is not present in the request body",
+  it(
+    "should not create a project and return a 400 status if name is not present in the request body",
     async () => {
       const res = await request(app)
-        .post("/workspaces/")
+        .post("/projects/")
         .set("Authorization", `Bearer ${ctx.token}`)
         .set("Accept", "application/json")
         .send({
-          description: "This is test workspace",
+          description: "This is test project",
+          workspace: ctx.workspace._id
         });
 
       expect(res.status).toBe(400);
@@ -274,179 +279,213 @@ describe("POST /projects", () => {
         },
       });
 
-      const workspace = await Workspace.findOne({
-        description: "This is test workspace",
+      const project = await Project.findOne({
+        description: "This is test project",
       }).lean();
-      expect(workspace).toBeNull();
+      expect(project).toBeNull();
+    }
+  );
+
+  it(
+    "should not create a project and return a 400 status if workspace is not present in the request body",
+    async () => {
+      const res = await request(app)
+        .post("/projects/")
+        .set("Authorization", `Bearer ${ctx.token}`)
+        .set("Accept", "application/json")
+        .send({
+          name: "New Project3",
+          description: "This is test project",
+        });
+
+      expect(res.status).toBe(400);
+      expect(res.body).toMatchObject({
+        status: "error",
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Validation error occured",
+          details: [
+            {
+              field: "workspace",
+              message: "Required",
+            },
+          ],
+        },
+      });
+
+      const project = await Project.findOne({
+        name: "New Project3",
+      }).lean();
+      expect(project).toBeNull();
     }
   );
 });
 
-// describe("PATCH /workspaces", () => {
-//   it("should return a updated workspace with 200 status code for a authorized user", async () => {
-//     const res = await request(app)
-//       .patch(`/workspaces/${ctx.workspaces[1]._id}`)
-//       .set("Authorization", `Bearer ${ctx.token}`)
-//       .set("Accept", "application/json")
-//       .send({
-//         name: "Modified Workspace1",
-//         description: "This workspace is modified",
-//       });
+describe("PATCH /projects", () => {
+  it("should return a updated project with 200 status code for a authorized user", async () => {
+    const res = await request(app)
+      .patch(`/projects/${ctx.projects[1]._id}`)
+      .set("Authorization", `Bearer ${ctx.token}`)
+      .set("Accept", "application/json")
+      .send({
+        name: "Modified Project1",
+        description: "This project is modified",
+      });
 
-//     expect(res.status).toBe(200);
-//     expect(res.body).toMatchObject({
-//       status: "success",
-//       data: {
-//         workspace: {
-//           name: "Modified Workspace1",
-//           description: "This workspace is modified",
-//         },
-//       },
-//     });
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({
+      status: "success",
+      data: {
+        project: {
+          name: "Modified Project1",
+          description: "This project is modified",
+        },
+      },
+    });
 
-//     const workspace = await Workspace.findById(ctx.workspaces[1]._id).lean();
-//     expect(workspace).toMatchObject({
-//       name: "Modified Workspace1",
-//       description: "This workspace is modified",
-//     })
-//   });
+    const project = await Project.findById(ctx.projects[1]._id).lean();
+    expect(project).toMatchObject({
+      name: "Modified Project1",
+      description: "This project is modified",
+    })
+  });
 
-//   it("should return a 401 status for unauthenticated user", async () => {
-//     const res = await request(app)
-//       .patch(`/workspaces/${ctx.workspaces[2]._id}`)
-//       .set("Accept", "application/json")
-//       .send({
-//         name: "Modified Workspace2",
-//       });
+  it("should return a 401 status for unauthenticated user", async () => {
+    const res = await request(app)
+      .patch(`/projects/${ctx.projects[2]._id}`)
+      .set("Accept", "application/json")
+      .send({
+        name: "Modified Project2",
+      });
 
-//     expect(res.status).toBe(401);
-//     expect(res.body).toMatchObject({
-//       status: "error",
-//       error: {
-//         code: "UNAUTHORIZED",
-//         message: "Unauthorized",
-//       },
-//     });
+    expect(res.status).toBe(401);
+    expect(res.body).toMatchObject({
+      status: "error",
+      error: {
+        code: "UNAUTHORIZED",
+        message: "Unauthorized",
+      },
+    });
 
-//     const workspace = await Workspace.findById(ctx.workspaces[2]._id).lean();
-//     expect(workspace).toMatchObject({
-//       name: "Workspace3",
-//       description: ""
-//     })
-//   });
+    const project = await Project.findById(ctx.projects[2]._id).lean();
+    expect(project).toMatchObject({
+      name: "Project3",
+      description: ""
+    })
+  });
 
-//   it("should return a 403 status for unauthorized user", async () => {
-//     const res = await request(app)
-//       .patch(`/workspaces/${ctx.workspaces[2]._id}`)
-//       .set("Authorization", `Bearer ${ctx.invalidToken}`)
-//       .set("Accept", "application/json")
-//       .send({
-//         name: "Modified Workspace3",
-//       });
+  it("should return a 403 status for unauthorized user", async () => {
+    const res = await request(app)
+      .patch(`/projects/${ctx.projects[2]._id}`)
+      .set("Authorization", `Bearer ${ctx.invalidToken}`)
+      .set("Accept", "application/json")
+      .send({
+        name: "Modified Project3",
+      });
 
-//     expect(res.status).toBe(403);
-//     expect(res.body).toMatchObject({
-//       status: "error",
-//       error: {
-//         code: "FORBIDDEN",
-//         message: "Forbidden",
-//       },
-//     });
+    expect(res.status).toBe(403);
+    expect(res.body).toMatchObject({
+      status: "error",
+      error: {
+        code: "FORBIDDEN",
+        message: "Forbidden",
+      },
+    });
 
-//     const workspace = await Workspace.findById(ctx.workspaces[2]._id).lean();
-//     expect(workspace).toMatchObject({
-//       name: "Workspace3",
-//       description: ""
-//     })
-//   });
+    const project = await Project.findById(ctx.projects[2]._id).lean();
+    expect(project).toMatchObject({
+      name: "Project3",
+      description: ""
+    })
+  });
 
-//   it("should return a 404 status if workspace not found", async () => {
-//     const res = await request(app)
-//       .patch("/workspaces/67d869a9de3d418067ec8f14")
-//       .set("Authorization", `Bearer ${ctx.token}`)
-//       .set("Accept", "application/json")
-//       .send({
-//         name: "Modified Workspace4",
-//       });
+  it("should return a 404 status if project not found", async () => {
+    const res = await request(app)
+      .patch("/projects/67d869a9de3d418067ec8f14")
+      .set("Authorization", `Bearer ${ctx.token}`)
+      .set("Accept", "application/json")
+      .send({
+        name: "Modified Project4",
+      });
 
-//     expect(res.status).toBe(404);
-//     expect(res.body).toMatchObject({
-//       status: "error",
-//       error: {
-//         code: "NOT_FOUND",
-//         message: "Workspace not found",
-//       },
-//     });
-//   });
-// });
+    expect(res.status).toBe(404);
+    expect(res.body).toMatchObject({
+      status: "error",
+      error: {
+        code: "NOT_FOUND",
+        message: "Project not found",
+      },
+    });
+  });
+});
 
-// describe("DELETE /workspaces", () => {
-//   it("should delete a workspace and return 200 status code for a authorized user", async () => {
-//     const res = await request(app)
-//       .delete(`/workspaces/${ctx.workspaces[3]._id}`)
-//       .set("Authorization", `Bearer ${ctx.token}`)
-//       .set("Accept", "application/json");
+describe("DELETE /projects", () => {
+  it("should delete a project and return 200 status code for a authorized user", async () => {
+    const res = await request(app)
+      .delete(`/projects/${ctx.projects[3]._id}`)
+      .set("Authorization", `Bearer ${ctx.token}`)
+      .set("Accept", "application/json");
 
-//     expect(res.status).toBe(200);
-//     expect(res.body).toMatchObject({
-//       status: "success",
-//       data: {},
-//     });
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({
+      status: "success",
+      data: {},
+    });
 
-//     const workspace = await Workspace.findById(ctx.workspaces[3]._id)
-//     expect(workspace).toBeNull();
-//   });
+    const workspace = await Workspace.findById(ctx.workspaces[3]._id)
+    expect(workspace).toBeNull();
+  });
 
-//   it("should return a 401 status for unauthenticated user", async () => {
-//     const res = await request(app)
-//       .delete(`/workspaces/${ctx.workspaces[4]._id}`)
-//       .set("Accept", "application/json");
+  it("should return a 401 status for unauthenticated user", async () => {
+    const res = await request(app)
+      .delete(`/workspaces/${ctx.workspaces[4]._id}`)
+      .set("Accept", "application/json");
 
-//     expect(res.status).toBe(401);
-//     expect(res.body).toMatchObject({
-//       status: "error",
-//       error: {
-//         code: "UNAUTHORIZED",
-//         message: "Unauthorized",
-//       },
-//     });
+    expect(res.status).toBe(401);
+    expect(res.body).toMatchObject({
+      status: "error",
+      error: {
+        code: "UNAUTHORIZED",
+        message: "Unauthorized",
+      },
+    });
 
-//     const workspace = await Workspace.findById(ctx.workspaces[4]._id)
-//     expect(workspace).not.toBeNull();
-//   });
+    const workspace = await Workspace.findById(ctx.workspaces[4]._id)
+    expect(workspace).not.toBeNull();
+  });
 
-//   it("should return a 403 status for unauthorized user", async () => {
-//     const res = await request(app)
-//       .delete(`/workspaces/${ctx.workspaces[4]._id}`)
-//       .set("Authorization", `Bearer ${ctx.invalidToken}`)
-//       .set("Accept", "application/json");
+  it("should return a 403 status for unauthorized user", async () => {
+    const res = await request(app)
+      .delete(`/workspaces/${ctx.workspaces[4]._id}`)
+      .set("Authorization", `Bearer ${ctx.invalidToken}`)
+      .set("Accept", "application/json");
 
-//     expect(res.status).toBe(403);
-//     expect(res.body).toMatchObject({
-//       status: "error",
-//       error: {
-//         code: "FORBIDDEN",
-//         message: "Forbidden",
-//       },
-//     });
+    expect(res.status).toBe(403);
+    expect(res.body).toMatchObject({
+      status: "error",
+      error: {
+        code: "FORBIDDEN",
+        message: "Forbidden",
+      },
+    });
 
-//     const workspace = await Workspace.findById(ctx.workspaces[4]._id)
-//     expect(workspace).not.toBeNull();
-//   });
+    const workspace = await Workspace.findById(ctx.workspaces[4]._id)
+    expect(workspace).not.toBeNull();
+  });
 
-//   it("should return a 404 status if workspace not found", async () => {
-//     const res = await request(app)
-//       .delete("/workspaces/67d869a9de3d418067ec8f14")
-//       .set("Authorization", `Bearer ${ctx.token}`)
-//       .set("Accept", "application/json");
+  it("should return a 404 status if workspace not found", async () => {
+    const res = await request(app)
+      .delete("/workspaces/67d869a9de3d418067ec8f14")
+      .set("Authorization", `Bearer ${ctx.token}`)
+      .set("Accept", "application/json");
 
-//     expect(res.status).toBe(404);
-//     expect(res.body).toMatchObject({
-//       status: "error",
-//       error: {
-//         code: "NOT_FOUND",
-//         message: "Workspace not found",
-//       },
-//     });
-//   });
-// });
+    expect(res.status).toBe(404);
+    expect(res.body).toMatchObject({
+      status: "error",
+      error: {
+        code: "NOT_FOUND",
+        message: "Workspace not found",
+      },
+    });
+  });
+});
