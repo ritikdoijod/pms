@@ -11,15 +11,17 @@ import userRoutes from "@/routes/user.route.js";
 import workspaceRoutes from "@/routes/workspace.route.js";
 import projectRoutes from "@/routes/project.route.js";
 import taskRoutes from "@/routes/task.route.js";
+import { parseFilters } from "./middlewares/query-parser.middleware.js";
 
 const app = express();
 app.use(express.json());
 
 app.use(format({ apiVersion: "0.0.1" }));
-app.use(authz);
-app.use(`/auth`, authRoutes);
+app.use('/auth', authRoutes);
 
 app.use(authn);
+app.use(authz);
+app.use(parseFilters)
 app.use("/users", userRoutes);
 app.use("/workspaces", workspaceRoutes);
 app.use("/projects", projectRoutes);

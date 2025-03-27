@@ -432,13 +432,13 @@ describe("DELETE /projects", () => {
       data: {},
     });
 
-    const workspace = await Workspace.findById(ctx.workspaces[3]._id)
-    expect(workspace).toBeNull();
+    const project = await Project.findById(ctx.projects[3]._id)
+    expect(project).toBeNull();
   });
 
   it("should return a 401 status for unauthenticated user", async () => {
     const res = await request(app)
-      .delete(`/workspaces/${ctx.workspaces[4]._id}`)
+      .delete(`/projects/${ctx.projects[4]._id}`)
       .set("Accept", "application/json");
 
     expect(res.status).toBe(401);
@@ -450,13 +450,13 @@ describe("DELETE /projects", () => {
       },
     });
 
-    const workspace = await Workspace.findById(ctx.workspaces[4]._id)
-    expect(workspace).not.toBeNull();
+    const project = await Project.findById(ctx.projects[4]._id)
+    expect(project).not.toBeNull();
   });
 
   it("should return a 403 status for unauthorized user", async () => {
     const res = await request(app)
-      .delete(`/workspaces/${ctx.workspaces[4]._id}`)
+      .delete(`/projects/${ctx.projects[4]._id}`)
       .set("Authorization", `Bearer ${ctx.invalidToken}`)
       .set("Accept", "application/json");
 
@@ -469,13 +469,13 @@ describe("DELETE /projects", () => {
       },
     });
 
-    const workspace = await Workspace.findById(ctx.workspaces[4]._id)
-    expect(workspace).not.toBeNull();
+    const project = await Project.findById(ctx.projects[4]._id)
+    expect(project).not.toBeNull();
   });
 
-  it("should return a 404 status if workspace not found", async () => {
+  it("should return a 404 status if project not found", async () => {
     const res = await request(app)
-      .delete("/workspaces/67d869a9de3d418067ec8f14")
+      .delete("/projects/67d869a9de3d418067ec8f14")
       .set("Authorization", `Bearer ${ctx.token}`)
       .set("Accept", "application/json");
 
@@ -484,7 +484,7 @@ describe("DELETE /projects", () => {
       status: "error",
       error: {
         code: "NOT_FOUND",
-        message: "Workspace not found",
+        message: "Project not found",
       },
     });
   });

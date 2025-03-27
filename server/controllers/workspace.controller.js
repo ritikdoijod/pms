@@ -6,21 +6,22 @@ import { Project } from "@/models/project.model";
 import { Task } from "@/models/task.model";
 import { NotFoundException } from "@/utils/app-error.js";
 import { STATUS } from "@/utils/constants.js";
-import { parseFilters } from "@/utils/filters";
 
 const getAllWorkspaces = asyncHandler(async (req, res) => {
-  const { include = [], filters = {} } = req.query;
+  const { include = [], filters = {}, fields, size, page } = req.query;
   const workspaces = await Workspace.find({
     $and: [
-      { ...parseFilters(filters) },
+      { ...filters },
       {
         author: {
           $eq: req.user,
         },
       },
     ],
-  })
+  }).select(fields)
     .populate(include)
+    .limit(size)
+    .skip((page - 1) * size)
     .lean();
 
   return res.success({ data: { workspaces } });
