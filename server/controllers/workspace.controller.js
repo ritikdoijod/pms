@@ -8,8 +8,8 @@ import { NotFoundException } from "@/utils/app-error.js";
 import { STATUS } from "@/utils/constants.js";
 
 const getAllWorkspaces = asyncHandler(async (req, res) => {
-  const { include = [], filters = {}, fields, size, page } = req.query;
-  const workspaces = await Workspace.find({
+  const { include, filters, sort, fields: projection, size, page } = req.query;
+  const query = {
     $and: [
       { ...filters },
       {
@@ -18,11 +18,23 @@ const getAllWorkspaces = asyncHandler(async (req, res) => {
         },
       },
     ],
-  }).select(fields)
-    .populate(include)
-    .limit(size)
-    .skip((page - 1) * size)
-    .lean();
+  };
+
+  const options = {
+    populate: include,
+    sort,
+    limit: size,
+    skip: (page - 1) * size,
+    lean: true,
+  };
+
+  const workspaces = await Workspace.find(
+    query,
+    projection,
+    options
+  );
+
+  const totalRecords = await Workspace.countDocuments(query);
 
   return res.success({ data: { workspaces } });
 });
