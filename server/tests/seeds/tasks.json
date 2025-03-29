@@ -3,30 +3,29 @@
     "title": "Task1",
     "description": "",
     "status": "TODO",
-    "priority": "normal"
+    "priority": "LOW"
   },
   {
     "title": "Task2",
     "description": "",
     "status": "TODO",
-    "priority": "normal"
+    "priority": "MEDIUM"
   },
   {
     "title": "Task3",
     "description": "",
     "status": "TODO",
-    "priority": "normal"
+    "priority": "HIGH"
   },
   {
     "title": "Task4",
     "description": "",
-    "status": "TODO",
-    "priority": "normal"
+    "status": "TODO"
   },
   {
     "title": "Task5",
     "description": "",
     "status": "TODO",
-    "priority": "normal"
+    "priority": "HIGH"
   }
 ]

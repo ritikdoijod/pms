@@ -3,26 +3,44 @@ import mongoose from "mongoose";
 import { asyncHandler } from "@/middlewares/async-handler.middleware.js";
 import { Project } from "@/models/project.model.js";
 import { Workspace } from "@/models/workspace.model.js";
+import { Task } from "@/models/task.model"
 import { NotFoundException } from "@/utils/app-error.js";
-import { parseFilters } from "@/utils/filters";
 import { STATUS } from "@/utils/constants";
 
 const getProjects = asyncHandler(async (req, res) => {
-  const { include = [], filters = {} } = req.query;
-  const projects = await Project.find({
+  const { include, filters, sort, fields: projection, size, page } = req.query;
+  const query = {
     $and: [
-      { ...parseFilters(filters) },
+      { ...filters },
       {
         author: {
           $eq: req.user,
         },
       },
     ],
-  })
-    .populate(include)
-    .lean();
+  };
 
-  return res.success({ data: { projects } });
+  const options = {
+    populate: include,
+    sort,
+    limit: size,
+    skip: (page - 1) * size,
+    lean: true,
+  };
+
+  const projects = await Project.find(query, projection, options);
+
+  const totalRecords = await Project.countDocuments(query);
+
+  return res.success({
+    data: { projects },
+    meta: {
+      totalRecords,
+      totalPages: page && Math.ceil(totalRecords / size),
+      page,
+      size,
+    },
+  });
 });
 
 const getProject = asyncHandler(async (req, res) => {
@@ -56,11 +74,11 @@ const createProject = asyncHandler(async (req, res) => {
       author: req.user,
     });
 
-    await project.save();
+    await project.save({ session });
 
     workspace.projects.push(project._id);
 
-    await workspace.save();
+    await workspace.save({ session });
 
     await session.commitTransaction();
 
@@ -95,6 +113,10 @@ const updateProject = asyncHandler(async (req, res) => {
           projects: { $eq: project._id }
         }
       }).session(session);
+
+      workspace.projects.push = project._id;
+
+      await workspace.save({ session })
 
       updateData.workspace = req.authz(workspace);
     }
@@ -133,6 +155,7 @@ const deleteProject = asyncHandler(async (req, res) => {
       }
     }).session(session);
 
+    await Task.deleteMany({ project: project._id }).session(session);
 
     await Project.findByIdAndDelete(project._id).session(session).lean();
 

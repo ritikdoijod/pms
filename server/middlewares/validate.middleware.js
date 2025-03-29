@@ -17,7 +17,7 @@ const validate = ({ params, headers, body }) => {
         throw new AppError(
           STATUS.HTTP.BAD_REQUEST,
           ERROR_CODES.VALIDATION_ERROR,
-          "Validation error occured",
+          "Validation error occurred",
           error?.issues?.map((err) => ({
             field: err.path.join("."),
             message: err.message,

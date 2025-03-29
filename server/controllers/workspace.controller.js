@@ -28,15 +28,19 @@ const getAllWorkspaces = asyncHandler(async (req, res) => {
     lean: true,
   };
 
-  const workspaces = await Workspace.find(
-    query,
-    projection,
-    options
-  );
+  const workspaces = await Workspace.find(query, projection, options);
 
   const totalRecords = await Workspace.countDocuments(query);
 
-  return res.success({ data: { workspaces } });
+  return res.success({
+    data: { workspaces },
+    meta: {
+      totalRecords,
+      totalPages: page && Math.ceil(totalRecords / size),
+      page,
+      size,
+    },
+  });
 });
 
 const getWorkspaceById = asyncHandler(async (req, res) => {

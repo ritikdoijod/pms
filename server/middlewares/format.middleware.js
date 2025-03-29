@@ -20,13 +20,14 @@ const format = ({ apiVersion }) => {
      * @param {*} [options.included]
      */
 
-    res.success = ({ statusCode = STATUS.HTTP.OK, data }) => {
+    res.success = ({ statusCode = STATUS.HTTP.OK, data, meta }) => {
       res.status(statusCode).json({
         status: "success",
         data,
         meta: {
           apiVersion,
           timestamp: req.timestamp,
+          ...meta
         },
       });
     };

@@ -4,10 +4,10 @@ import { MongoMemoryReplSet } from "mongodb-memory-server";
 import mongoose from "mongoose";
 
 import { app } from "@/app";
-import { Project } from "@/models/project.model";
+import { Task } from "@/models/task.model";
 
-import { seedUsers, seedWorkspaces, seedProjects } from "./seeds/index";
-import projectsData from "./seeds/projects";
+import { seedUsers, seedWorkspaces, seedProjects, seedTasks } from "./seeds/index";
+import tasksData from "./seeds/tasks";
 
 import { signToken } from "@/utils/jwt";
 
@@ -20,12 +20,13 @@ beforeAll(async () => {
   await mongoose.connect(mongoReplSet.getUri());
   const [user] = await seedUsers([{ name: "Test User1", email: "test_user1@mail.com", password: "Test@123" }]);
   const [workspace] = await seedWorkspaces([{ name: "Workspace1", description: "" }], user._id);
-  const projects = await seedProjects(projectsData, workspace._id, user._id);
+  const [project] = await seedProjects([{ name: "Project1", description: "" }], workspace._id, user._id);
+  const tasks = await seedTasks(tasksData, project._id, user._id);
 
   const token = signToken(user._id);
   const invalidToken = signToken(INVALID_ID);
 
-  ctx = { token, user, workspace, projects, invalidToken };
+  ctx = { token, user, workspace, project, tasks, invalidToken };
 });
 
 afterAll(async () => {
@@ -33,13 +34,13 @@ afterAll(async () => {
   await mongoReplSet.stop();
 });
 
-describe("Project API", () => {
-  describe("GET /projects", () => {
-    it("returns projects for authenticated user", async () => {
-      const projects = await Project.find({ author: ctx.user._id }).lean();
+describe("Task API", () => {
+  describe("GET /tasks", () => {
+    it("returns tasks for authenticated user", async () => {
+      const tasks = await Task.find({ author: ctx.user._id }).lean();
 
       const res = await request(app)
-        .get("/projects")
+        .get("/tasks")
         .set("Authorization", `Bearer ${ctx.token}`)
         .set("Accept", "application/json");
 
@@ -47,14 +48,14 @@ describe("Project API", () => {
       expect(res.headers["content-type"]).toMatch(/application\/json/);
       expect(res.body).toMatchObject({
         status: "success",
-        data: { projects: JSON.parse(JSON.stringify(projects)) },
+        data: { tasks: JSON.parse(JSON.stringify(tasks)) },
         meta: { apiVersion: "0.0.1" },
       });
     });
 
     it("returns 401 for unauthenticated user", async () => {
       const res = await request(app)
-        .get("/projects")
+        .get("/tasks")
         .set("Accept", "application/json");
 
       expect(res.status).toBe(401);
@@ -65,23 +66,23 @@ describe("Project API", () => {
     });
   });
 
-  describe("GET /projects/:id", () => {
-    it("returns a project for authorized user", async () => {
+  describe("GET /tasks/:id", () => {
+    it("returns a task for authorized user", async () => {
       const res = await request(app)
-        .get(`/projects/${ctx.projects[0]._id}`)
+        .get(`/tasks/${ctx.tasks[0]._id}`)
         .set("Authorization", `Bearer ${ctx.token}`)
         .set("Accept", "application/json");
 
       expect(res.status).toBe(200);
       expect(res.body).toMatchObject({
         status: "success",
-        data: { project: JSON.parse(JSON.stringify(ctx.projects[0])) },
+        data: { task: JSON.parse(JSON.stringify(ctx.tasks[0])) },
       });
     });
 
     it("returns 401 for unauthenticated user", async () => {
       const res = await request(app)
-        .get(`/projects/${ctx.projects[0]._id}`)
+        .get(`/tasks/${ctx.tasks[0]._id}`)
         .set("Accept", "application/json");
 
       expect(res.status).toBe(401);
@@ -93,7 +94,7 @@ describe("Project API", () => {
 
     it("returns 403 for unauthorized user", async () => {
       const res = await request(app)
-        .get(`/projects/${ctx.projects[0]._id}`)
+        .get(`/tasks/${ctx.tasks[0]._id}`)
         .set("Authorization", `Bearer ${ctx.invalidToken}`)
         .set("Accept", "application/json");
 
@@ -104,50 +105,50 @@ describe("Project API", () => {
       });
     });
 
-    it("returns 404 if project not found", async () => {
+    it("returns 404 if task not found", async () => {
       const res = await request(app)
-        .get(`/projects/${INVALID_ID}`)
+        .get(`/tasks/${INVALID_ID}`)
         .set("Authorization", `Bearer ${ctx.token}`)
         .set("Accept", "application/json");
 
       expect(res.status).toBe(404);
       expect(res.body).toMatchObject({
         status: "error",
-        error: { code: "NOT_FOUND", message: "Project not found" },
+        error: { code: "NOT_FOUND", message: "Task not found" },
       });
     });
   });
 
-  describe("POST /projects", () => {
-    it("creates a project for authenticated user", async () => {
-      const newProject = { name: "New Project1", description: "This is a new project", workspace: ctx.workspace._id };
+  describe("POST /tasks", () => {
+    it("creates a task for authenticated user", async () => {
+      const newTask = { title: "New Task1", description: "This is a new task", project: ctx.project._id };
 
       const res = await request(app)
-        .post("/projects/")
+        .post("/tasks/")
         .set("Authorization", `Bearer ${ctx.token}`)
         .set("Accept", "application/json")
-        .send(newProject);
+        .send(newTask);
 
       expect(res.status).toBe(201);
       expect(res.body).toMatchObject({
         status: "success",
         data: {
-          project: {
-            name: newProject.name,
-            description: newProject.description,
-            workspace: ctx.workspace._id.toString(),
+          task: {
+            title: newTask.title,
+            description: newTask.description,
+            project: ctx.project._id.toString(),
             author: ctx.user._id.toString(),
           },
         },
       });
 
-      const project = await Project.findOne({ name: newProject.name }).lean();
-      expect(project).toMatchObject(newProject);
+      const task = await Task.findOne({ title: newTask.title }).lean();
+      expect(task).toMatchObject(newTask);
     });
 
     it("returns 400 for empty request body", async () => {
       const res = await request(app)
-        .post("/projects/")
+        .post("/tasks/")
         .set("Authorization", `Bearer ${ctx.token}`)
         .set("Accept", "application/json");
 
@@ -158,20 +159,20 @@ describe("Project API", () => {
           code: "VALIDATION_ERROR",
           message: "Validation error occurred",
           details: [
-            { field: "name", message: "Required" },
-            { field: "workspace", message: "Required" },
+            { field: "title", message: "Required" },
+            { field: "project", message: "Required" },
           ],
         },
       });
     });
   });
 
-  describe("PATCH /projects/:id", () => {
-    it("updates a project for authorized user", async () => {
-      const updatedData = { name: "Updated Project Name" };
+  describe("PATCH /tasks/:id", () => {
+    it("updates a task for authorized user", async () => {
+      const updatedData = { title: "Updated Task Title" };
 
       const res = await request(app)
-        .patch(`/projects/${ctx.projects[0]._id}`)
+        .patch(`/tasks/${ctx.tasks[0]._id}`)
         .set("Authorization", `Bearer ${ctx.token}`)
         .set("Accept", "application/json")
         .send(updatedData);
@@ -180,37 +181,37 @@ describe("Project API", () => {
       expect(res.body).toMatchObject({
         status: "success",
         data: {
-          project: {
-            _id: ctx.projects[0]._id.toString(),
-            name: updatedData.name,
-            description: ctx.projects[0].description,
+          task: {
+            _id: ctx.tasks[0]._id.toString(),
+            title: updatedData.title,
+            description: ctx.tasks[0].description,
           },
         },
       });
 
-      const updatedProject = await Project.findById(ctx.projects[0]._id).lean();
-      expect(updatedProject).toMatchObject(updatedData);
+      const updatedTask = await Task.findById(ctx.tasks[0]._id).lean();
+      expect(updatedTask).toMatchObject(updatedData);
     });
 
-    it("returns 404 if project not found", async () => {
+    it("returns 404 if task not found", async () => {
       const res = await request(app)
-        .patch(`/projects/${INVALID_ID}`)
+        .patch(`/tasks/${INVALID_ID}`)
         .set("Authorization", `Bearer ${ctx.token}`)
         .set("Accept", "application/json")
-        .send({ name: "Nonexistent Project" });
+        .send({ title: "Nonexistent Task" });
 
       expect(res.status).toBe(404);
       expect(res.body).toMatchObject({
         status: "error",
-        error: { code: "NOT_FOUND", message: "Project not found" },
+        error: { code: "NOT_FOUND", message: "Task not found" },
       });
     });
   });
 
-  describe("DELETE /projects/:id", () => {
-    it("deletes a project for authorized user", async () => {
+  describe("DELETE /tasks/:id", () => {
+    it("deletes a task for authorized user", async () => {
       const res = await request(app)
-        .delete(`/projects/${ctx.projects[0]._id}`)
+        .delete(`/tasks/${ctx.tasks[0]._id}`)
         .set("Authorization", `Bearer ${ctx.token}`)
         .set("Accept", "application/json");
 
@@ -220,20 +221,20 @@ describe("Project API", () => {
         data: {}
       });
 
-      const deletedProject = await Project.findById(ctx.projects[0]._id);
-      expect(deletedProject).toBeNull();
+      const deletedTask = await Task.findById(ctx.tasks[0]._id);
+      expect(deletedTask).toBeNull();
     });
 
-    it("returns 404 if project not found", async () => {
+    it("returns 404 if task not found", async () => {
       const res = await request(app)
-        .delete(`/projects/${INVALID_ID}`)
+        .delete(`/tasks/${INVALID_ID}`)
         .set("Authorization", `Bearer ${ctx.token}`)
         .set("Accept", "application/json");
 
       expect(res.status).toBe(404);
       expect(res.body).toMatchObject({
         status: "error",
-        error: { code: "NOT_FOUND", message: "Project not found" },
+        error: { code: "NOT_FOUND", message: "Task not found" },
       });
     });
   });

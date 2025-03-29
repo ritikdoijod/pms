@@ -13,15 +13,16 @@ import { signToken } from "@/utils/jwt";
 const mongoReplSet = await MongoMemoryReplSet.create({ replSet: 2 });
 
 let ctx;
+const INVALID_ID = "67d869a9de3d418067ec8f14";
 
 beforeAll(async () => {
   await mongoose.connect(mongoReplSet.getUri());
   const [user] = await seedUsers([{ name: "Test User1", email: "test_user1@mail.com", password: "Test@123" }]);
   const workspaces = await seedWorkspaces(workspacesData, user._id);
   const token = signToken(user._id);
-  const invalidToken = signToken("67d869a9de3d418067ec8f14")
+  const invalidToken = signToken(INVALID_ID);
 
-  ctx = { token, user, workspaces, invalidToken }
+  ctx = { token, user, workspaces, invalidToken };
 });
 
 afterAll(async () => {
@@ -29,382 +30,331 @@ afterAll(async () => {
   await mongoReplSet.stop();
 });
 
+describe("Workspace API", () => {
+  describe("GET /workspaces", () => {
+    it("returns workspaces for authenticated user", async () => {
+      const workspaces = await Workspace.find({ author: ctx.user._id }).lean();
+      const res = await request(app)
+        .get("/workspaces")
+        .set("Authorization", `Bearer ${ctx.token}`)
+        .set("Accept", "application/json");
 
-describe("GET /workspaces", () => {
-  it("should return a list of workspaces with 200 status for authenticated user", async () => {
-    const workspaces = await Workspace.find({ author: ctx.user._id }).lean();
-
-    const res = await request(app)
-      .get("/workspaces")
-      .set(
-        "Authorization",
-        `Bearer ${ctx.token}`
-      )
-      .set("Accept", "application/json");
-
-    expect(res.status).toBe(200);
-    expect(res.headers["content-type"]).toMatch(/application\/json/);
-    expect(res.body).toMatchObject({
-      status: "success",
-      data: {
-        workspaces: JSON.parse(JSON.stringify(workspaces)),
-      },
-      meta: { apiVersion: "0.0.1" },
-    });
-  });
-
-  it("should return 401 status to unauthenticated users", async () => {
-    const res = await request(app)
-      .get("/workspaces")
-      .set("Accept", "application/json");
-
-    expect(res.status).toBe(401);
-    expect(res.body).toMatchObject({
-      status: "error",
-      error: {
-        code: "UNAUTHORIZED",
-        message: "Unauthorized",
-      },
-    });
-  });
-});
-
-describe("GET /workspaces/:id", () => {
-  it("should return a workspace with 200 status for authorized user", async () => {
-    const res = await request(app)
-      .get(`/workspaces/${ctx.workspaces[0]._id}`)
-      .set("Authorization", `Bearer ${ctx.token}`)
-      .set("Accept", "application/json");
-
-    expect(res.status).toBe(200);
-    expect(res.body).toMatchObject({
-      status: "success",
-      data: {
-        workspace: JSON.parse(JSON.stringify(ctx.workspaces[0])),
-      },
-    });
-  });
-
-  it("should return 401 status to unauthenticated users", async () => {
-    const res = await request(app)
-      .get("/workspaces/:id")
-      .set("Accept", "application/json");
-
-    expect(res.status).toBe(401);
-    expect(res.body).toMatchObject({
-      status: "error",
-      error: {
-        code: "UNAUTHORIZED",
-        message: "Unauthorized",
-      },
-    });
-  });
-
-  it("should return a 403 status for unauthorized user", async () => {
-    const res = await request(app)
-      .get(`/workspaces/${ctx.workspaces[0]._id}`)
-      .set("Authorization", `Bearer ${ctx.invalidToken}`)
-      .set("Accept", "application/json");
-
-    expect(res.status).toBe(403);
-    expect(res.body).toMatchObject({
-      status: "error",
-      error: {
-        code: "FORBIDDEN",
-        message: "Forbidden",
-      },
-    });
-  });
-
-  it("should return a 404 status if workspace not found", async () => {
-    const res = await request(app)
-      .get("/workspaces/67d869a9de3d418067ec8f14")
-      .set("Authorization", `Bearer ${ctx.token}`)
-      .set("Accept", "application/json")
-
-    expect(res.status).toBe(404);
-    expect(res.body).toMatchObject({
-      status: "error",
-      error: {
-        code: "NOT_FOUND",
-        message: "Workspace not found",
-      },
-    });
-  });
-
-});
-
-describe("POST /workspaces", () => {
-  it("should create and return a workspace with 201 status for authenticated user", async () => {
-    const res = await request(app)
-      .post("/workspaces/")
-      .set("Authorization", `Bearer ${ctx.token}`)
-      .set("Accept", "application/json")
-      .send({
-        name: "New Workspace1",
-        description: "This is new workspace",
-      });
-
-    expect(res.status).toBe(201);
-    expect(res.body).toMatchObject({
-      status: "success",
-      data: {
-        workspace: {
-          name: "New Workspace1",
-          description: "This is new workspace",
-          author: ctx.user._id.toString()
-        }
-      },
-    });
-
-    const workspace = await Workspace.findOne({ name: "New Workspace1" }).lean();
-    expect(workspace).toMatchObject({
-      name: "New Workspace1",
-      description: "This is new workspace",
-      author: ctx.user._id
-    })
-  });
-
-  it("should not create a workspace and return a 401 status for unauthenticated user", async () => {
-    const res = await request(app)
-      .post("/workspaces/")
-      .set("Accept", "application/json")
-      .send({
-        name: "New Workspace2",
-        description: "",
-      });
-
-    expect(res.status).toBe(401);
-    expect(res.body).toMatchObject({
-      status: "error",
-      error: {
-        code: "UNAUTHORIZED",
-        message: "Unauthorized",
-      },
-    });
-
-    const workspace = await Workspace.findOne({ name: "New Workspace2" }).lean();
-    expect(workspace).toBeNull()
-  });
-
-  it("should not create a workspace and return a 400 status if the request body is empty", async () => {
-    const res = await request(app)
-      .post("/workspaces/")
-      .set("Authorization", `Bearer ${ctx.token}`)
-      .set("Accept", "application/json");
-
-    expect(res.status).toBe(400);
-    expect(res.body).toMatchObject({
-      status: "error",
-      error: {
-        code: "VALIDATION_ERROR",
-        message: "Validation error occured",
-        details: [
-          {
-            field: "name",
-            message: "Required",
-          },
-        ],
-      },
-    });
-  });
-
-  it("should not create a workspace and return a 400 status if name is not present in the request body", async () => {
-    const res = await request(app)
-      .post("/workspaces/")
-      .set("Authorization", `Bearer ${ctx.token}`)
-      .set("Accept", "application/json")
-      .send({
-        description: "This is test workspace",
-      });
-
-    expect(res.status).toBe(400);
-    expect(res.body).toMatchObject({
-      status: "error",
-      error: {
-        code: "VALIDATION_ERROR",
-        message: "Validation error occured",
-        details: [
-          {
-            field: "name",
-            message: "Required",
-          },
-        ],
-      },
-    });
-
-    const workspace = await Workspace.findOne({
-      description: "This is test workspace",
-    }).lean();
-    expect(workspace).toBeNull();
-  });
-});
-
-describe("PATCH /workspaces", () => {
-  it("should return a updated workspace with 200 status code for a authorized user", async () => {
-    const res = await request(app)
-      .patch(`/workspaces/${ctx.workspaces[1]._id}`)
-      .set("Authorization", `Bearer ${ctx.token}`)
-      .set("Accept", "application/json")
-      .send({
-        name: "Modified Workspace1",
-        description: "This workspace is modified",
-      });
-
-    expect(res.status).toBe(200);
-    expect(res.body).toMatchObject({
-      status: "success",
-      data: {
-        workspace: {
-          name: "Modified Workspace1",
-          description: "This workspace is modified",
+      expect(res.status).toBe(200);
+      expect(res.headers["content-type"]).toMatch(/application\/json/);
+      expect(res.body).toMatchObject({
+        status: "success",
+        data: {
+          workspaces: workspaces.map((workspace) => ({
+            _id: workspace._id.toString(),
+            name: workspace.name,
+            description: workspace.description,
+            author: workspace.author.toString(),
+          })),
         },
-      },
+        meta: { apiVersion: "0.0.1" },
+      });
     });
 
-    const workspace = await Workspace.findById(ctx.workspaces[1]._id).lean();
-    expect(workspace).toMatchObject({
-      name: "Modified Workspace1",
-      description: "This workspace is modified",
-    })
+    it("returns 401 for unauthenticated user", async () => {
+      const res = await request(app)
+        .get("/workspaces")
+        .set("Accept", "application/json");
+
+      expect(res.status).toBe(401);
+      expect(res.body).toMatchObject({
+        status: "error",
+        error: {
+          code: "UNAUTHORIZED",
+          message: "Unauthorized",
+        },
+      });
+    });
   });
 
-  it("should return a 401 status for unauthenticated user", async () => {
-    const res = await request(app)
-      .patch(`/workspaces/${ctx.workspaces[2]._id}`)
-      .set("Accept", "application/json")
-      .send({
-        name: "Modified Workspace2",
+  describe("GET /workspaces/:id", () => {
+    it("returns a workspace for authorized user", async () => {
+      const workspace = ctx.workspaces[0];
+      const res = await request(app)
+        .get(`/workspaces/${workspace._id}`)
+        .set("Authorization", `Bearer ${ctx.token}`)
+        .set("Accept", "application/json");
+
+      expect(res.status).toBe(200);
+      expect(res.body).toMatchObject({
+        status: "success",
+        data: {
+          workspace: {
+            _id: workspace._id.toString(),
+            name: workspace.name,
+            description: workspace.description,
+            author: workspace.author.toString(),
+          },
+        },
+      });
+    });
+
+    it("returns 401 for unauthenticated user", async () => {
+      const res = await request(app)
+        .get(`/workspaces/${ctx.workspaces[0]._id}`)
+        .set("Accept", "application/json");
+
+      expect(res.status).toBe(401);
+      expect(res.body).toMatchObject({
+        status: "error",
+        error: {
+          code: "UNAUTHORIZED",
+          message: "Unauthorized",
+        },
+      });
+    });
+
+    it("returns 403 for unauthorized user", async () => {
+      const res = await request(app)
+        .get(`/workspaces/${ctx.workspaces[0]._id}`)
+        .set("Authorization", `Bearer ${ctx.invalidToken}`)
+        .set("Accept", "application/json");
+
+      expect(res.status).toBe(403);
+      expect(res.body).toMatchObject({
+        status: "error",
+        error: {
+          code: "FORBIDDEN",
+          message: "Forbidden",
+        },
+      });
+    });
+
+    it("returns 404 if workspace not found", async () => {
+      const res = await request(app)
+        .get(`/workspaces/${INVALID_ID}`)
+        .set("Authorization", `Bearer ${ctx.token}`)
+        .set("Accept", "application/json");
+
+      expect(res.status).toBe(404);
+      expect(res.body).toMatchObject({
+        status: "error",
+        error: {
+          code: "NOT_FOUND",
+          message: "Workspace not found",
+        },
+      });
+    });
+  });
+
+  describe("POST /workspaces", () => {
+    it("creates a workspace for authenticated user", async () => {
+      const newWorkspace = {
+        name: "New Workspace1",
+        description: "This is a new workspace",
+      };
+
+      const res = await request(app)
+        .post("/workspaces/")
+        .set("Authorization", `Bearer ${ctx.token}`)
+        .set("Accept", "application/json")
+        .send(newWorkspace);
+
+      expect(res.status).toBe(201);
+      expect(res.body).toMatchObject({
+        status: "success",
+        data: {
+          workspace: {
+            name: newWorkspace.name,
+            description: newWorkspace.description,
+            author: ctx.user._id.toString(),
+          },
+        },
       });
 
-    expect(res.status).toBe(401);
-    expect(res.body).toMatchObject({
-      status: "error",
-      error: {
-        code: "UNAUTHORIZED",
-        message: "Unauthorized",
-      },
+      const workspace = await Workspace.findOne({ name: newWorkspace.name }).lean();
+      expect(workspace).toMatchObject({
+        name: newWorkspace.name,
+        description: newWorkspace.description,
+        author: ctx.user._id,
+      });
     });
 
-    const workspace = await Workspace.findById(ctx.workspaces[2]._id).lean();
-    expect(workspace).toMatchObject({
-      name: "Workspace3",
-      description: ""
-    })
+    it("returns 401 for unauthenticated user", async () => {
+      const res = await request(app)
+        .post("/workspaces/")
+        .set("Accept", "application/json")
+        .send({ name: "New Workspace2", description: "" });
+
+      expect(res.status).toBe(401);
+      expect(res.body).toMatchObject({
+        status: "error",
+        error: {
+          code: "UNAUTHORIZED",
+          message: "Unauthorized",
+        },
+      });
+    });
+
+    it("returns 400 for empty request body", async () => {
+      const res = await request(app)
+        .post("/workspaces/")
+        .set("Authorization", `Bearer ${ctx.token}`)
+        .set("Accept", "application/json");
+
+      expect(res.status).toBe(400);
+      expect(res.body).toMatchObject({
+        status: "error",
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Validation error occurred",
+          details: [{ field: "name", message: "Required" }],
+        },
+      });
+    });
   });
 
-  it("should return a 403 status for unauthorized user", async () => {
-    const res = await request(app)
-      .patch(`/workspaces/${ctx.workspaces[2]._id}`)
-      .set("Authorization", `Bearer ${ctx.invalidToken}`)
-      .set("Accept", "application/json")
-      .send({
-        name: "Modified Workspace3",
+  describe("PATCH /workspaces/:id", () => {
+    it("updates a workspace for authorized user", async () => {
+      const workspace = ctx.workspaces[0];
+      const updatedData = { name: "Updated Workspace Name" };
+
+      const res = await request(app)
+        .patch(`/workspaces/${workspace._id}`)
+        .set("Authorization", `Bearer ${ctx.token}`)
+        .set("Accept", "application/json")
+        .send(updatedData);
+
+      expect(res.status).toBe(200);
+      expect(res.body).toMatchObject({
+        status: "success",
+        data: {
+          workspace: {
+            _id: workspace._id.toString(),
+            name: updatedData.name,
+            description: workspace.description,
+            author: workspace.author.toString(),
+          },
+        },
       });
 
-    expect(res.status).toBe(403);
-    expect(res.body).toMatchObject({
-      status: "error",
-      error: {
-        code: "FORBIDDEN",
-        message: "Forbidden",
-      },
+      const updatedWorkspace = await Workspace.findById(workspace._id).lean();
+      expect(updatedWorkspace).toMatchObject(updatedData);
     });
 
-    const workspace = await Workspace.findById(ctx.workspaces[2]._id).lean();
-    expect(workspace).toMatchObject({
-      name: "Workspace3",
-      description: ""
-    })
+    it("returns 401 for unauthenticated user", async () => {
+      const workspace = ctx.workspaces[0];
+      const res = await request(app)
+        .patch(`/workspaces/${workspace._id}`)
+        .set("Accept", "application/json")
+        .send({ name: "Unauthorized Update" });
+
+      expect(res.status).toBe(401);
+      expect(res.body).toMatchObject({
+        status: "error",
+        error: {
+          code: "UNAUTHORIZED",
+          message: "Unauthorized",
+        },
+      });
+    });
+
+    it("returns 403 for unauthorized user", async () => {
+      const workspace = ctx.workspaces[0];
+      const res = await request(app)
+        .patch(`/workspaces/${workspace._id}`)
+        .set("Authorization", `Bearer ${ctx.invalidToken}`)
+        .set("Accept", "application/json")
+        .send({ name: "Unauthorized Update" });
+
+      expect(res.status).toBe(403);
+      expect(res.body).toMatchObject({
+        status: "error",
+        error: {
+          code: "FORBIDDEN",
+          message: "Forbidden",
+        },
+      });
+    });
+
+    it("returns 404 if workspace not found", async () => {
+      const res = await request(app)
+        .patch(`/workspaces/${INVALID_ID}`)
+        .set("Authorization", `Bearer ${ctx.token}`)
+        .set("Accept", "application/json")
+        .send({ name: "Nonexistent Workspace" });
+
+      expect(res.status).toBe(404);
+      expect(res.body).toMatchObject({
+        status: "error",
+        error: {
+          code: "NOT_FOUND",
+          message: "Workspace not found",
+        },
+      });
+    });
   });
 
-  it("should return a 404 status if workspace not found", async () => {
-    const res = await request(app)
-      .patch("/workspaces/67d869a9de3d418067ec8f14")
-      .set("Authorization", `Bearer ${ctx.token}`)
-      .set("Accept", "application/json")
-      .send({
-        name: "Modified Workspace4",
+  describe("DELETE /workspaces/:id", () => {
+    it("deletes a workspace for authorized user", async () => {
+      const workspace = ctx.workspaces[3];
+
+      const res = await request(app)
+        .delete(`/workspaces/${workspace._id}`)
+        .set("Authorization", `Bearer ${ctx.token}`)
+        .set("Accept", "application/json");
+
+      expect(res.status).toBe(200);
+      expect(res.body).toMatchObject({
+        status: "success",
+        data: {}
       });
 
-    expect(res.status).toBe(404);
-    expect(res.body).toMatchObject({
-      status: "error",
-      error: {
-        code: "NOT_FOUND",
-        message: "Workspace not found",
-      },
-    });
-  });
-});
-
-describe("DELETE /workspaces", () => {
-  it("should delete a workspace and return 200 status code for a authorized user", async () => {
-    const res = await request(app)
-      .delete(`/workspaces/${ctx.workspaces[3]._id}`)
-      .set("Authorization", `Bearer ${ctx.token}`)
-      .set("Accept", "application/json");
-
-    expect(res.status).toBe(200);
-    expect(res.body).toMatchObject({
-      status: "success",
-      data: {},
+      const deletedWorkspace = await Workspace.findById(workspace._id);
+      expect(deletedWorkspace).toBeNull();
     });
 
-    const workspace = await Workspace.findById(ctx.workspaces[3]._id)
-    expect(workspace).toBeNull();
-  });
+    it("returns 401 for unauthenticated user", async () => {
+      const workspace = ctx.workspaces[4];
+      const res = await request(app)
+        .delete(`/workspaces/${workspace._id}`)
+        .set("Accept", "application/json");
 
-  it("should return a 401 status for unauthenticated user", async () => {
-    const res = await request(app)
-      .delete(`/workspaces/${ctx.workspaces[4]._id}`)
-      .set("Accept", "application/json");
-
-    expect(res.status).toBe(401);
-    expect(res.body).toMatchObject({
-      status: "error",
-      error: {
-        code: "UNAUTHORIZED",
-        message: "Unauthorized",
-      },
+      expect(res.status).toBe(401);
+      expect(res.body).toMatchObject({
+        status: "error",
+        error: {
+          code: "UNAUTHORIZED",
+          message: "Unauthorized",
+        },
+      });
     });
 
-    const workspace = await Workspace.findById(ctx.workspaces[4]._id)
-    expect(workspace).not.toBeNull();
-  });
+    it("returns 403 for unauthorized user", async () => {
+      const workspace = ctx.workspaces[4];
+      const res = await request(app)
+        .delete(`/workspaces/${workspace._id}`)
+        .set("Authorization", `Bearer ${ctx.invalidToken}`)
+        .set("Accept", "application/json");
 
-  it("should return a 403 status for unauthorized user", async () => {
-    const res = await request(app)
-      .delete(`/workspaces/${ctx.workspaces[4]._id}`)
-      .set("Authorization", `Bearer ${ctx.invalidToken}`)
-      .set("Accept", "application/json");
-
-    expect(res.status).toBe(403);
-    expect(res.body).toMatchObject({
-      status: "error",
-      error: {
-        code: "FORBIDDEN",
-        message: "Forbidden",
-      },
+      expect(res.status).toBe(403);
+      expect(res.body).toMatchObject({
+        status: "error",
+        error: {
+          code: "FORBIDDEN",
+          message: "Forbidden",
+        },
+      });
     });
 
-    const workspace = await Workspace.findById(ctx.workspaces[4]._id)
-    expect(workspace).not.toBeNull();
-  });
+    it("returns 404 if workspace not found", async () => {
+      const res = await request(app)
+        .delete(`/workspaces/${INVALID_ID}`)
+        .set("Authorization", `Bearer ${ctx.token}`)
+        .set("Accept", "application/json");
 
-  it("should return a 404 status if workspace not found", async () => {
-    const res = await request(app)
-      .delete("/workspaces/67d869a9de3d418067ec8f14")
-      .set("Authorization", `Bearer ${ctx.token}`)
-      .set("Accept", "application/json");
-
-    expect(res.status).toBe(404);
-    expect(res.body).toMatchObject({
-      status: "error",
-      error: {
-        code: "NOT_FOUND",
-        message: "Workspace not found",
-      },
+      expect(res.status).toBe(404);
+      expect(res.body).toMatchObject({
+        status: "error",
+        error: {
+          code: "NOT_FOUND",
+          message: "Workspace not found",
+        },
+      });
     });
   });
 });
