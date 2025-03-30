@@ -10,7 +10,7 @@ const api = create({
 
 api.hooks.req.use(async (opts) => {
   if (!opts.url.includes("auth")) {
-    const token = (await cookies()).get("token").value;
+    const token = (await cookies()).get("token")?.value;
 
     if (token)
       opts.headers = {
@@ -22,10 +22,11 @@ api.hooks.req.use(async (opts) => {
   return opts;
 });
 
-api.hooks.res.use(async (res) =>
-  res.status === "success"
-    ? { data: res.data, error: null }
-    : { data: null, error: res.error },
-);
+api.hooks.res.use(async (res) => {
+  if (res.status === "success") return res.data;
+
+  console.log(res.error)
+  throw new Error(res.error.message);
+});
 
 export { api };

@@ -26,12 +26,8 @@ export const metadata = {
 
 export default async function RootLayout({ children }) {
   const userId = (await cookies()).get("uid")?.value;
-  let user;
+  const user = userId ? (await api.get(`/users/${userId}`)).user : undefined;
 
-  if (userId) {
-    const { data, error } = await api.get(`/users/${userId}`);
-    user = data.user;
-  }
 
   return (
     <html lang="en" suppressHydrationWarning>

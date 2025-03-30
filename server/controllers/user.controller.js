@@ -3,11 +3,10 @@ import { User } from "@/models/user.model.js";
 import { BadRequestException } from "@/utils/app-error.js";
 
 const getUser = asyncHandler(async (req, res) => {
-  const { include = [] } = req.query;
-
-  const user = await User.findById(req.user?._id).populate(include);
+  const user = await User.findById(req.params.id);
 
   if (!user) throw new BadRequestException("User not found");
+  req.authz(user);
 
   return res.success({ data: { user } });
 });

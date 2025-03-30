@@ -16,11 +16,11 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { createWorkspaceFormSchema } from "@/lib/validations/workspace";
-import { createWorkspace } from "@/actions/workspace";
+import { createProjectFormSchema } from "@/lib/validations/project";
+import { createProject } from "@/actions/project";
 
-const CreateWorkspaceForm = ({ onSuccess }) => {
-  const [formState, formAction] = React.useActionState(createWorkspace, {
+const CreateProjectForm = ({ workspace, onSuccess }) => {
+  const [formState, formAction] = React.useActionState(createProject, {
     status: "",
   });
 
@@ -32,7 +32,7 @@ const CreateWorkspaceForm = ({ onSuccess }) => {
       description: undefined,
       ...(formState?.fields ?? {}),
     },
-    resolver: zodResolver(createWorkspaceFormSchema),
+    resolver: zodResolver(createProjectFormSchema),
     mode: "onSubmit",
   });
 
@@ -84,7 +84,7 @@ const CreateWorkspaceForm = ({ onSuccess }) => {
                 <FormLabel>Name</FormLabel>
                 <FormControl>
                   <Input
-                    placeholder="Enter workspace name here.."
+                    placeholder="Enter project name here..."
                     {...field}
                   />
                 </FormControl>
@@ -107,8 +107,10 @@ const CreateWorkspaceForm = ({ onSuccess }) => {
             )}
           />
 
+          {/* <Input type="hidden" name="workspace" value={workspace} /> */}
+
           <Button type="submit" className="cursor-pointer">
-            Create Workspace
+            Create Project
           </Button>
         </div>
       </form>
@@ -116,4 +118,4 @@ const CreateWorkspaceForm = ({ onSuccess }) => {
   );
 };
 
-export { CreateWorkspaceForm };
+export { CreateProjectForm };

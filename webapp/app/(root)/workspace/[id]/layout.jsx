@@ -3,15 +3,13 @@ import {
   SidebarInset,
   SidebarProvider,
 } from "@/components/ui/sidebar";
-import { getWorkspaces, getWorkspaceWithProjects } from "@/lib/api/workspaces";
+import { api } from "@/configs/fc.config"
 
 const Layout = async ({ children, params }) => {
   const { id } = await params;
-  const activeWorkspace = await getWorkspaceWithProjects(id);
 
-  if (!data?.workspace) return <div>Invalid Workspace</div>
-
-  const workspaces = await getWorkspaces();
+  const { workspace: activeWorkspace } = await api.get(`/workspaces/${id}?${new URLSearchParams({ include: 'projects' }).toString()}`)
+  const { workspaces } = await api.get('/workspaces/')
 
   return (
     <SidebarProvider>

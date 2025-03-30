@@ -1,5 +1,6 @@
 import { ForbiddenException, UnauthorizedException } from "@/utils/app-error";
 import { verifyToken } from "@/utils/jwt.js";
+import { User } from "@/models/user.model";
 
 const authn = (req, res, next) => {
   try {
@@ -22,7 +23,13 @@ const authn = (req, res, next) => {
 
 const authz = (req, res, next) => {
   req.authz = (doc) => {
-    if (doc.author.toString() === req.user) return doc;
+    if (doc instanceof User) {
+      if (doc._id.toString() === req.user) return doc;
+
+      throw new ForbiddenException('Forbidden')
+    }
+
+    if (doc?.author?.toString() === req.user) return doc;
 
     throw new ForbiddenException('Forbidden')
   }
