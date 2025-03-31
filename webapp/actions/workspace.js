@@ -2,10 +2,9 @@
 
 import { api } from "@/configs/fc.config";
 
-const createWorkspace = async (_prevState, formData) => {
+const createWorkspace = async (data) => {
   try {
-    console.log(formData);
-    const { name, description } = Object.fromEntries(formData);
+    const { name, description } = data;
 
     await api.post("/workspaces", {
       name, description

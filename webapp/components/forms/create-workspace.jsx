@@ -20,61 +20,32 @@ import { createWorkspaceFormSchema } from "@/lib/validations/workspace";
 import { createWorkspace } from "@/actions/workspace";
 
 const CreateWorkspaceForm = ({ onSuccess }) => {
-  const [formState, formAction] = React.useActionState(createWorkspace, {
-    status: "",
-  });
-
-  const formRef = React.useRef();
-
   const form = useForm({
     defaultValues: {
       name: "",
-      description: undefined,
-      ...(formState?.fields ?? {}),
     },
     resolver: zodResolver(createWorkspaceFormSchema),
     mode: "onSubmit",
   });
 
-  const [, startTransition] = React.useTransition();
-
-  const onSubmit = React.useCallback(async () => {
-    startTransition(() => {
-      formAction(new FormData(formRef.current));
-    });
-  }, [formAction]);
-
-  React.useEffect(() => {
-    Promise.resolve().then(() => {
-      if (formState) {
-        switch (formState.status) {
-          case "success":
-            toast.success(formState.message);
-            if (onSuccess) onSuccess();
-            break;
-          case "error":
-            toast.error(formState.message);
-            formState.errors?.map((error) =>
-              form.setError(error.field, {
-                type: "server",
-                message: error.message,
-              }),
-            );
-            break;
-          default:
-            break;
-        }
-      }
-    });
-  }, [formState]);
+  const onSubmit = async (data) => {
+    const { status, message } = await createWorkspace(data);
+    switch (status) {
+      case "success":
+        toast.success(message);
+        if (onSuccess) onSuccess();
+        break;
+      case "error":
+        toast.error(message);
+        break;
+      default:
+        break;
+    }
+  };
 
   return (
     <Form {...form}>
-      <form
-        ref={formRef}
-        action={formAction}
-        onSubmit={form.handleSubmit(onSubmit)}
-      >
+      <form onSubmit={form.handleSubmit(onSubmit)}>
         <div className="grid gap-6">
           <FormField
             control={form.control}
@@ -83,10 +54,7 @@ const CreateWorkspaceForm = ({ onSuccess }) => {
               <FormItem>
                 <FormLabel>Name</FormLabel>
                 <FormControl>
-                  <Input
-                    placeholder="Enter workspace name here.."
-                    {...field}
-                  />
+                  <Input placeholder="Enter workspace name here.." {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
