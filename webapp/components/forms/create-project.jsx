@@ -20,53 +20,28 @@ import { createProjectFormSchema } from "@/lib/validations/project";
 import { createProject } from "@/actions/project";
 
 const CreateProjectForm = ({ workspace, onSuccess }) => {
-  const [formState, formAction] = React.useActionState(createProject, {
-    status: "",
-  });
-
-  const formRef = React.useRef();
-
   const form = useForm({
     defaultValues: {
       name: "",
-      description: undefined,
-      ...(formState?.fields ?? {}),
     },
     resolver: zodResolver(createProjectFormSchema),
     mode: "onSubmit",
   });
 
-  const [, startTransition] = React.useTransition();
-
-  const onSubmit = React.useCallback(async () => {
-    startTransition(() => {
-      formAction(new FormData(formRef.current));
-    });
-  }, [formAction]);
-
-  React.useEffect(() => {
-    Promise.resolve().then(() => {
-      if (formState) {
-        switch (formState.status) {
-          case "success":
-            toast.success(formState.message);
-            if (onSuccess) onSuccess();
-            break;
-          case "error":
-            toast.error(formState.message);
-            formState.errors?.map((error) =>
-              form.setError(error.field, {
-                type: "server",
-                message: error.message,
-              }),
-            );
-            break;
-          default:
-            break;
-        }
-      }
-    });
-  }, [formState]);
+  const onSubmit = async () => {
+    const { status, message } = await createProject(data);
+    switch (status) {
+      case "success":
+        toast.success(message);
+        if (onSuccess) onSuccess();
+        break;
+      case "error":
+        toast.error(message);
+        break;
+      default:
+        break;
+    }
+  };
 
   return (
     <Form {...form}>
@@ -83,10 +58,7 @@ const CreateProjectForm = ({ workspace, onSuccess }) => {
               <FormItem>
                 <FormLabel>Name</FormLabel>
                 <FormControl>
-                  <Input
-                    placeholder="Enter project name here..."
-                    {...field}
-                  />
+                  <Input placeholder="Enter project name here..." {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -107,7 +79,7 @@ const CreateProjectForm = ({ workspace, onSuccess }) => {
             )}
           />
 
-          {/* <Input type="hidden" name="workspace" value={workspace} /> */}
+          <Input type="hidden" name="workspace" value={workspace} />
 
           <Button type="submit" className="cursor-pointer">
             Create Project

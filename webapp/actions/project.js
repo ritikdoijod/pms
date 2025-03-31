@@ -2,13 +2,14 @@
 
 import { api } from "@/configs/fc.config";
 
-const createProject = async (_prevState, formData) => {
+const createProject = async (data) => {
   try {
-    const { name, description, workspace } = Object.fromEntries(formData);
-    console.log(formData);
+    const { name, description, workspace } = data;
     await api.post("/project", {
-      name, description, workspace
-    })
+      name,
+      description,
+      workspace,
+    });
 
     return { status: "success", message: "Project created successfully." };
   } catch (error) {
