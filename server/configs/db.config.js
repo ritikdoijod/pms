@@ -5,6 +5,7 @@ import { logger } from "./logger.config.js";
 const connectToDB = async () => {
   try {
     mongoose.set("strict", false);
+    logger.info("Connecting to " + config.MONGO_URI);
     await mongoose.connect(config.MONGO_URI);
     logger.info("Database connected.");
   } catch (error) {

@@ -23,36 +23,8 @@ const NavProjects = ({ projects }) => {
         {projects?.map((project) => (
           <SidebarMenuItem key={project.name}>
             <SidebarMenuButton>
-              <project.icon />
               <span>{project.name}</span>
             </SidebarMenuButton>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <SidebarMenuAction showOnHover>
-                  <MoreHorizontal />
-                  <span className="sr-only">More</span>
-                </SidebarMenuAction>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent
-                className="min-w-40"
-                side="right"
-                align="start"
-              >
-                <DropdownMenuItem>
-                  <Folder />
-                  View Project
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <Forward />
-                  Share Project
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem>
-                  <Trash />
-                  Delete Project
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
           </SidebarMenuItem>
         ))}
       </SidebarMenu>

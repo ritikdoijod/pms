@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useRouter } from "next/navigation"
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
@@ -20,6 +21,8 @@ import { createWorkspaceFormSchema } from "@/lib/validations/workspace";
 import { createWorkspace } from "@/actions/workspace";
 
 const CreateWorkspaceForm = ({ onSuccess }) => {
+  const router = useRouter();
+
   const form = useForm({
     defaultValues: {
       name: "",
@@ -28,15 +31,16 @@ const CreateWorkspaceForm = ({ onSuccess }) => {
     mode: "onSubmit",
   });
 
-  const onSubmit = async (data) => {
-    const { status, message } = await createWorkspace(data);
+  const onSubmit = async (values) => {
+    const { status, data, error } = await createWorkspace(values);
     switch (status) {
       case "success":
-        toast.success(message);
+        toast.success("Workspace created successfully.");
         if (onSuccess) onSuccess();
+        router.push(data.workspace?._id);
         break;
       case "error":
-        toast.error(message);
+        toast.error(error.message);
         break;
       default:
         break;

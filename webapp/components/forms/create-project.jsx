@@ -23,12 +23,14 @@ const CreateProjectForm = ({ workspace, onSuccess }) => {
   const form = useForm({
     defaultValues: {
       name: "",
+      workspace
     },
     resolver: zodResolver(createProjectFormSchema),
     mode: "onSubmit",
   });
 
-  const onSubmit = async () => {
+  const onSubmit = async (data) => {
+    console.log(data)
     const { status, message } = await createProject(data);
     switch (status) {
       case "success":
@@ -46,8 +48,6 @@ const CreateProjectForm = ({ workspace, onSuccess }) => {
   return (
     <Form {...form}>
       <form
-        ref={formRef}
-        action={formAction}
         onSubmit={form.handleSubmit(onSubmit)}
       >
         <div className="grid gap-6">
@@ -79,7 +79,18 @@ const CreateProjectForm = ({ workspace, onSuccess }) => {
             )}
           />
 
-          <Input type="hidden" name="workspace" value={workspace} />
+          <FormField
+            control={form.control}
+            name="workspace"
+            render={({ field }) => (
+              <FormItem>
+                <FormControl>
+                  <Input type="hidden" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
           <Button type="submit" className="cursor-pointer">
             Create Project

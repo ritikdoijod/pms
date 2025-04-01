@@ -2,17 +2,17 @@
 
 import { api } from "@/configs/fc.config";
 
-const createWorkspace = async (data) => {
+const createWorkspace = async (values) => {
   try {
-    const { name, description } = data;
+    const { name, description } = values;
 
-    await api.post("/workspaces", {
+    const data = await api.post("/workspaces", {
       name, description
     })
 
-    return { status: "success", message: "Workspace created successfully." };
+    return { status: "success", data };
   } catch (error) {
-    return { status: "error", message: error.message };
+    return { status: "error", error };
   }
 };
 
