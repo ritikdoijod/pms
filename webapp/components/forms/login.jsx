@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { redirect } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
@@ -29,52 +30,29 @@ import { loginFormSchema } from "@/lib/validations/auth";
 import { login } from "@/actions/auth";
 
 const LoginForm = () => {
-  const [formState, formAction] = React.useActionState(login, {
-    status: "",
-  });
-
-  const formRef = React.useRef();
-
   const form = useForm({
     defaultValues: {
       email: "",
       password: "",
-      ...(formState?.fields ?? {}),
     },
     resolver: zodResolver(loginFormSchema),
     mode: "onTouched",
   });
 
-  const [, startTransition] = React.useTransition();
-
-  const onSubmit = React.useCallback(async () => {
-    startTransition(() => {
-      formAction(new FormData(formRef.current));
-    });
-  }, [formAction]);
-
-  React.useEffect(() => {
-    Promise.resolve().then(() => {
-      if (formState) {
-        switch (formState.status) {
-          case "success":
-            toast.success(formState.message);
-            break;
-          case "error":
-            toast.error(formState.message);
-            formState.errors?.map((error) =>
-              form.setError(error.field, {
-                type: "server",
-                message: error.message,
-              }),
-            );
-            break;
-          default:
-            break;
-        }
-      }
-    });
-  }, [formState]);
+  const onSubmit = async (values) => {
+    const { status, data, error } = await login(values);
+    switch (status) {
+      case "success":
+        toast.success("Logged in.");
+        redirect('/')
+        break;
+      case "error":
+        toast.error(error.message);
+        break;
+      default:
+        break;
+    }
+  };
 
   return (
     <Card>
@@ -120,11 +98,7 @@ const LoginForm = () => {
           <Separator className="flex-grow" />
         </div>
         <Form {...form}>
-          <form
-            ref={formRef}
-            action={formAction}
-            onSubmit={form.handleSubmit(onSubmit)}
-          >
+          <form onSubmit={form.handleSubmit(onSubmit)}>
             <div className="grid gap-6">
               <FormField
                 control={form.control}

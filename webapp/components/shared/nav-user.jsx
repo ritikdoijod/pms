@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import {
   SidebarMenu,
   SidebarMenuButton,
@@ -22,8 +23,6 @@ import { useCurrentUser } from "@/lib/contexts/user.context";
 const NavUser = () => {
   const { isMobile } = useSidebar();
   const { user } = useCurrentUser();
-
-  const handleLogout = () => {};
 
   return (
     <SidebarMenu>
@@ -75,9 +74,11 @@ const NavUser = () => {
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleLogout}>
-              <LogOut />
-              Log out
+            <DropdownMenuItem asChild>
+              <Link href="/auth/logout">
+                <LogOut />
+                Log out
+              </Link>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

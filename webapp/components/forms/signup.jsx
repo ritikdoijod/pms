@@ -1,6 +1,6 @@
 "use client";
 
-import * as React from "react";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
@@ -25,16 +25,12 @@ import {
 import { Input } from "@/components/ui/input";
 import { Link } from "@/components/ui/link";
 import { Separator } from "@/components/ui/separator";
-import { useRouter } from "next/navigation";
 
 import { signUpFormSchema } from "@/lib/validations/auth";
 import { signup } from "@/actions/auth";
 
 const SignUpForm = () => {
-  const [formState, formAction] = React.useActionState(signup, {
-    status: "",
-  });
-  const formRef = React.useRef();
+  const router = useRouter();
 
   const form = useForm({
     defaultValues: {
@@ -42,44 +38,25 @@ const SignUpForm = () => {
       email: "",
       password: "",
       confirmPassword: "",
-      ...(formState?.fields ?? {}),
     },
     resolver: zodResolver(signUpFormSchema),
     mode: "onTouched",
   });
 
-  const [, startTransition] = React.useTransition();
-  const router = useRouter();
-
-  const onSubmit = React.useCallback(async () => {
-    startTransition(() => {
-      formAction(new FormData(formRef.current));
-    });
-  }, [formAction]);
-
-  React.useEffect(() => {
-    Promise.resolve().then(() => {
-      if (formState) {
-        switch (formState.status) {
-          case "success":
-            toast.success(formState.message);
-            router.push("/auth/login");
-            break;
-          case "error":
-            toast.error(formState.message);
-            formState.errors?.map((error) =>
-              form.setError(error.field, {
-                type: "server",
-                message: error.message,
-              }),
-            );
-            break;
-          default:
-            break;
-        }
-      }
-    });
-  }, [formState]);
+  const onSubmit = async (values) => {
+    const { status, data, error } = await signup(values);
+    switch (status) {
+      case "success":
+        toast.success("Registered successfully.");
+        router.push("/auth/login");
+        break;
+      case "error":
+        toast.error(error.message);
+        break;
+      default:
+        break;
+    }
+  };
 
   return (
     <Card>
@@ -124,11 +101,7 @@ const SignUpForm = () => {
           <Separator className="flex-grow" />
         </div>
         <Form {...form}>
-          <form
-            ref={formRef}
-            action={formAction}
-            onSubmit={form.handleSubmit(onSubmit)}
-          >
+          <form onSubmit={form.handleSubmit(onSubmit)}>
             <div className="grid gap-6">
               <FormField
                 control={form.control}

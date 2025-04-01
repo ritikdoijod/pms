@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
@@ -20,22 +21,21 @@ import { createProjectFormSchema } from "@/lib/validations/project";
 import { createProject } from "@/actions/project";
 
 const CreateProjectForm = ({ workspace, onSuccess }) => {
+  const router = useRouter();
   const form = useForm({
     defaultValues: {
       name: "",
-      workspace
     },
     resolver: zodResolver(createProjectFormSchema),
     mode: "onSubmit",
   });
 
   const onSubmit = async (data) => {
-    console.log(data)
-    const { status, message } = await createProject(data);
+    const { status, message } = await createProject({ ...data, workspace });
     switch (status) {
       case "success":
         toast.success(message);
-        if (onSuccess) onSuccess();
+        router.refresh();
         break;
       case "error":
         toast.error(message);
@@ -47,9 +47,7 @@ const CreateProjectForm = ({ workspace, onSuccess }) => {
 
   return (
     <Form {...form}>
-      <form
-        onSubmit={form.handleSubmit(onSubmit)}
-      >
+      <form onSubmit={form.handleSubmit(onSubmit)}>
         <div className="grid gap-6">
           <FormField
             control={form.control}
@@ -73,19 +71,6 @@ const CreateProjectForm = ({ workspace, onSuccess }) => {
                 <FormLabel>Description</FormLabel>
                 <FormControl>
                   <Textarea {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="workspace"
-            render={({ field }) => (
-              <FormItem>
-                <FormControl>
-                  <Input type="hidden" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>

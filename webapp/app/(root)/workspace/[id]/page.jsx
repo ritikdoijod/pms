@@ -40,10 +40,13 @@ const Page = async ({ params }) => {
       <div>
         <Dialog modal>
           {workspace?.projects?.length > 0 ? (
-            <div className="flex-1 p-8 flex">
+            <div className="flex-1 p-8">
+              <div className="font-bold">
+                <h2>Projects</h2>
+              </div>
               <div className="flex gap-8 h-fit">
                 {workspace.projects.map((project) => (
-                  <Card>
+                  <Card key={project._id}>
                     <CardHeader>
                       <CardTitle>{project.name}</CardTitle>
                       <CardDescription>{project.description}</CardDescription>

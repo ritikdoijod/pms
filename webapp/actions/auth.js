@@ -2,45 +2,47 @@
 
 import { api } from "@/configs/fc.config";
 import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
 
 /**
  * Register new user
- * @param {unknown} _prevState
- * @param {FormData} formData
+ * @param {Object} values
  * @returns {Promise<Object>}
  */
 
-const signup = async (_prevState, formData) => {
-  const { name, email, password, confirmPassword } =
-    Object.fromEntries(formData);
+const signup = async (values) => {
+  try {
+    const { name, email, password, confirmPassword } = values;
 
-  const { data, error } = await api.post("/auth/register", {
-    name,
-    email,
-    password,
-    confirmPassword,
-  });
+    const data = await api.post("/auth/register", {
+      name,
+      email,
+      password,
+      confirmPassword,
+    });
 
-  if (error) return { status: "error", message: error.message };
-
-  return { status: "success", message: "Registered successfully" };
+    return { status: "success", data };
+  } catch (error) {
+    return { status: "error", error };
+  }
 };
 
-const login = async (_prevState, formData) => {
-  const { email, password } = Object.fromEntries(formData);
+const login = async (values) => {
+  try {
+    const { email, password } = values;
 
-  const { data, error } = await api.post("/auth/login", {
-    email,
-    password,
-  });
+    const data = await api.post("/auth/login", {
+      email,
+      password,
+    });
 
-  if (error) return { status: "error", message: error.message };
+    (await cookies()).set("token", data.token);
+    (await cookies()).set("uid", data.user?._id);
 
-  (await cookies()).set("token", data.token);
-  (await cookies()).set("uid", data.user?._id);
-
-  redirect("/");
+    return { status: "success", data };
+  } catch (error) {
+    return { status: "error", error };
+  }
+  redir
 };
 
 const logout = async () => {
