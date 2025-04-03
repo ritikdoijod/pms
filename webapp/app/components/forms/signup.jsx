@@ -18,6 +18,7 @@ function SignUpForm() {
     <Card>
       <CardHeader className="text-center">
         <CardTitle className="text-xl">Welcome!!</CardTitle>
+        <CardDescription>Please sign up to get started with PMS</CardDescription>
       </CardHeader>
       <CardContent className="grid gap-6">
         <Form method="post">

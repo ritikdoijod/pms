@@ -1,3 +1,5 @@
+import { AppError } from "./errors";
+
 const create = (config) => {
   const reqHooks = [];
   const resHooks = [];
@@ -26,7 +28,7 @@ const create = (config) => {
 
       return data;
     } catch (error) {
-      throw error;
+      throw new AppError(error.message, error.details);
     }
   };
 

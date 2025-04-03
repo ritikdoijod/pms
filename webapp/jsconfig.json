@@ -1,5 +1,7 @@
 {
+  "type": "module",
   "compilerOptions": {
+    "target": "ESNext",
     "baseUrl": "./app",
     "paths": {
       "@/*": [
