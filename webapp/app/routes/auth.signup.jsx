@@ -1,4 +1,5 @@
 import { Link, Form, useActionData, useNavigation } from "@remix-run/react";
+import { json, redirect } from "@remix-run/node";
 import { useForm, getInputProps, FormProvider } from "@conform-to/react";
 import { parseWithZod } from "@conform-to/zod";
 import { z } from "zod";
@@ -16,6 +17,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import {
+  FormControl,
   FormField,
   FormItem,
   FormLabel,
@@ -41,7 +43,7 @@ const schema = z
       .trim()
       .min(6)
       .max(255),
-    confirmPassword: z.string().trim().max(255),
+    confirmPassword: z.string({required_error: "Confirm Password is required"}).trim().max(255),
   })
   .refine(({ password, confirmPassword }) => password === confirmPassword, {
     message: "Passwords must match!",
@@ -52,7 +54,6 @@ export async function action({ request }) {
   try {
     const formData = await request.formData();
     const submission = parseWithZod(formData, { schema });
-    console.log(submission);
     if (submission.status !== "success") {
       return json(submission.reply());
     }
@@ -85,7 +86,6 @@ export default function SignUp() {
     shouldRevalidate: "onInput",
   });
 
-
   return (
     <Card>
       <CardHeader className="text-center">
@@ -101,37 +101,43 @@ export default function SignUp() {
               <div className="grid gap-6">
                 <FormField name={fields.name.name}>
                   <FormItem>
-                    <FormLabel htmlFor="name" className="gap-1" requiredStar>
-                      Name
-                    </FormLabel>
-                    <Input {...getInputProps(fields.name, { type: "text" })} />
+                    <FormLabel requiredStar>Name</FormLabel>
+                    <FormControl autoComplete>
+                      <Input type="text" />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 </FormField>
-                <FormItem>
-                  <FormLabel htmlFor="email" className="gap-1" requiredStar>
-                    Email
-                  </FormLabel>
-                  <Input type="email" name="email" autoComplete="email" />
-                </FormItem>
 
-                <FormItem>
-                  <FormLabel htmlFor="password" className="gap-1" requiredStar>
-                    Password
-                  </FormLabel>
-                  <Input type="password" name="password" />
-                </FormItem>
+                <FormField name={fields.email.name}>
+                  <FormItem>
+                    <FormLabel requiredStar>Email</FormLabel>
+                    <FormControl autoComplete>
+                      <Input type="email" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                </FormField>
 
-                <FormItem>
-                  <FormLabel
-                    htmlFor="confirmPassword"
-                    className="gap-1"
-                    requiredStar
-                  >
-                    Confirm Password
-                  </FormLabel>
-                  <Input type="password" name="confirmPassword" />
-                </FormItem>
+                <FormField name={fields.password.name}>
+                  <FormItem>
+                    <FormLabel requiredStar>Password</FormLabel>
+                    <FormControl>
+                      <Input type="password" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                </FormField>
+
+                <FormField name={fields.confirmPassword.name}>
+                  <FormItem>
+                    <FormLabel requiredStar>Confirm Passwod</FormLabel>
+                    <FormControl>
+                      <Input type="password" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                </FormField>
 
                 {navigation.state === "submitting" ? (
                   <Button disabled>
