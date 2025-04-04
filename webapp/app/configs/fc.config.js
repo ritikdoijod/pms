@@ -1,8 +1,9 @@
+import { AppError } from "@/lib/errors";
 import { create } from "@/lib/fc.js";
 
 const api = create({
   // TODO: set env for backend URL
-  baseURL: 'http://localhost:8000',
+  baseURL: "http://localhost:8000",
   headers: {
     "Content-type": "application/json",
   },
@@ -11,7 +12,6 @@ const api = create({
 api.hooks.req.use(async (opts) => {
   if (!opts.url.includes("auth")) {
     // const token = (await cookies()).get("token")?.value;
-
     // if (token)
     //   opts.headers = {
     //     ...opts.headers,
@@ -25,7 +25,13 @@ api.hooks.req.use(async (opts) => {
 api.hooks.res.use(async (res) => {
   if (res.status === "success") return res.data;
 
-  throw new Error(res.error.message);
+  throw new AppError(
+    res.error.message,
+    res.error?.details?.reduce((acc, current) => {
+      acc[current.field] = current.message;
+      return acc;
+    }, {})
+  );
 });
 
 export { api };
