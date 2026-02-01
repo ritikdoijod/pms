@@ -1,0 +1,30 @@
+### get all patients
+GET http://localhost:4001/patients
+
+### get patient
+GET http://localhost:4001/patients/019c0b26-559d-73a9-b82e-b6e5d4de3016
+
+### create patient
+POST http://localhost:4001/patients
+Content-Type: application/json
+
+{
+    "first_name": "Test",
+    "last_name": "Patient8",
+    "email": "test_patient8@example.com",
+    "date_of_birth": "2001-01-01"
+}
+
+### update patient
+PATCH  http://localhost:4001/patients
+Content-Type: application/json
+
+{
+    "first_name": "Test",
+    "last_name": "Patient8",
+    "email": "test_patient8@example.com",
+    "date_of_birth": "2001-01-01"
+}
+
+### delete patient
+DELETE http://localhost:4001/patients

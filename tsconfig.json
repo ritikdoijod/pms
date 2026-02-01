@@ -1,0 +1,19 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compileOnSave": false,
+  "files": [],
+  "references": [
+    {
+      "path": "./apps/patient-service"
+    },
+    {
+      "path": "./libs/logger"
+    },
+    {
+      "path": "./libs/middlewares"
+    },
+    {
+      "path": "./libs/pubsub"
+    }
+  ]
+}
