@@ -6,7 +6,7 @@ import { logger } from '@pms/logger';
 serve(
   {
     fetch: app.fetch,
-    port: 4001,
+    port: 4002,
   },
   ({ port }) => {
     logger.info(`Patient service is listening on port ${port}`);

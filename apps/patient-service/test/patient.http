@@ -1,11 +1,11 @@
 ### get all patients
-GET http://localhost:4001/patients
+GET http://localhost:4002/patients
 
 ### get patient
-GET http://localhost:4001/patients/019c0b26-559d-73a9-b82e-b6e5d4de3016
+GET http://localhost:4002/patients/019c0b26-559d-73a9-b82e-b6e5d4de3016
 
 ### create patient
-POST http://localhost:4001/patients
+POST http://localhost:4002/patients
 Content-Type: application/json
 
 {
@@ -16,7 +16,7 @@ Content-Type: application/json
 }
 
 ### update patient
-PATCH  http://localhost:4001/patients
+PATCH  http://localhost:4002/patients
 Content-Type: application/json
 
 {
@@ -27,4 +27,4 @@ Content-Type: application/json
 }
 
 ### delete patient
-DELETE http://localhost:4001/patients
+DELETE http://localhost:4002/patients
